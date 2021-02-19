@@ -14,7 +14,7 @@ class Command(BaseCommand):
     def _load_fixtures(self):
         # ProductCategoryFactory.create_batch(size=10)
         # WarehouseFactory.create_batch(size=3)
-        OrderDetailFactory.create_batch(size=40) 
+        OrderDetailFactory.create_batch(size=100) 
 
     def _clean_db(self):
         for model in [OrderDetail, Receipt,ReceiptDetail, Order]:

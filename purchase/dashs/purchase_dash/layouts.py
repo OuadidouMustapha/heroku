@@ -68,6 +68,84 @@ def body_container():
         [
             dbc.Row([
                 dbc.Col([
+                    dash_utils.get_mini_card(
+                        MINI_CARD_SUBTITLE_MAD_ID,
+                        title=_('Simulation'),
+                        dropdown_div=html.Div([
+
+                            dbc.Form(
+                                [
+                                    dbc.Row([
+                                        dbc.Col([
+                                            html.Div([
+                                                dbc.FormGroup(
+                                                    [
+                                                        dbc.Label("Valeur (Rique Rupture):",
+                                                                  className="mr-4"
+                                                                  ),
+                                                        dbc.Input(
+                                                            id='input-on-submit-risque-rupture',
+                                                            type="number",
+                                                            style={
+                                                                'background-color': 'rgb(255, 153, 153)',
+                                                                'color': 'black',
+                                                                'text-align': 'center',
+                                                                'fontStyle': 'oblique',
+                                                                'fontWeight': 'bold',
+                                                            }
+                                                        ),
+                                                    ],
+                                                    className="mr-4",
+                                                ),
+                                            ])
+                                        ], sm=12, md=12, lg=12),
+                                    ]),
+                                    dbc.Row([
+                                        dbc.Col([
+                                            html.Div([
+                                                dbc.FormGroup(
+                                                    [
+                                                        dbc.Label("Valeur (Bon Stock) : ", className="mr-2"),
+                                                        dbc.Input(
+                                                            id='input-acceptable-value',
+                                                            type="number",
+                                                            style={
+                                                                'background-color': 'rgb(204, 255, 204)',
+                                                                'color': 'black',
+                                                                'text-align': 'center',
+                                                                'fontStyle': 'oblique',
+                                                                'fontWeight': 'bold',
+                                                            }
+                                                        ),
+                                                    ],
+                                                    className="mr-3",
+                                                ),
+                                            ])
+                                        ], sm=12, md=12, lg=12)
+                                    ]),
+
+                                    dbc.Button(
+                                        "Start Simulation",
+                                        id='submit-val',
+                                        color="black",
+                                        className="mr-1",
+                                        style={
+                                            'width': '200px',
+                                            'background-color': 'rgb(0, 204, 0)',
+                                            'margin-left': 60,
+                                            'margin': 30,
+                                            'color': 'black',
+                                        },
+                                        n_clicks=0
+                                    ),
+                                ],
+                                inline=True,
+                            ),
+                        ]),
+                    )
+                ], sm=12, md=12, lg=12)]),
+            dbc.Row([
+                dbc.Col([
                     dash_utils.get_mini_card_profil(MINI_CARD_SUBTITLE_BIAS_PERCENT_ID,title=_('OTIF Global'),id_subtitle=SUBTITLE_OTIF_ID,icon="fas fa-tachometer-alt"
                                             #  subtitle=
                                             #     [html.Br(),
@@ -112,32 +190,15 @@ def body_container():
                                                     )
                                                 ),
                                             ),
-                                            dcc.Tab(
-                                                label=_('OTIF'),
-                                                value='Product',
-                                                children=html.Div(
-                                                    className='control-tab',
-                                                    children=[
-                                                        html.Div(
-                                                            className='app-controls-block',
-                                                            children=dcc.Loading(
-                                                                html.Div(
-                                                                    [dcc.Graph(id=FIGURE_OTIF_ID)],
-                                                                    className="",
-                                                                )
-                                                            ),
-                                                        ),
-                                                    ]
-                                                )
-                                            ),
                                         ])
                                 ],
                             ),
                             dcc.Store(id='forna-custom-colors-1')
                         ]
                     ),
-                ], sm=12, md=6, lg=6),
-
+                ], sm=12, md=12, lg=12),
+            ]),
+            dbc.Row([
                 dbc.Col([
                     html.Div(
                         [
@@ -159,23 +220,33 @@ def body_container():
                                                     )
                                                 ),
                                             ),
+                                        ])
+                                ],
+                            ),
+                        ],
+                        className="shadow-lg p-12 mb-5 bg-white rounded",
+                    ),
+                ], sm=12, md=6, lg=6),
+                dbc.Col([
+                    html.Div(
+                        [
+                            html.Div(
+                                id='forna-control-tabs-2',
+                                className='control-tabs',
+                                children=[
+                                    dcc.Tabs(
+                                        id='forna-tabs-1',
+                                        value='what-is',
+                                        children=[
                                             dcc.Tab(
-                                                label=_('Orders'),
-                                                value='Product-at',
-                                                children=html.Div(
-                                                    className='control-tab',
-                                                    children=[
-                                                        html.Div(
-                                                            className='app-controls-block',
-                                                            children=dcc.Loading(
-                                                                html.Div(
-                                                                    [dcc.Graph(id=FIGURE_ORDERS_ID)],
-                                                                    className="",
-                                                                )
-                                                            ),
-                                                        ),
-                                                    ]
-                                                )
+                                                label=_('OrdersDetails by Date'),
+                                                value='what-is',
+                                                children=dcc.Loading(
+                                                    html.Div(
+                                                        [dcc.Graph(id=FIGURE_OTIF_ID)],
+                                                        className="",
+                                                    )
+                                                ),
                                             ),
                                         ])
                                 ],
@@ -184,31 +255,8 @@ def body_container():
                         className="shadow-lg p-12 mb-5 bg-white rounded",
                     ),
                 ], sm=12, md=6, lg=6),
-            ]),
+            ])
 
-
-            html.Div(
-                [
-                    dcc.Loading(
-                        html.Div(
-                            [
-                                dbc.Row([
-                                    dbc.Col([
-                                        dcc.Graph(id=FIGURE_PIE_ORDERDETAIL_ID),
-                                        html.P(_('State Of Order Details'),className='font-weight-bold text-primary  h6  text-center'),
-                                    ], sm=12, md=6, lg=6),
-                                    dbc.Col([
-                                        dcc.Graph(id=FIGURE_PIE_ORDER_ID),
-                                        html.P(_('Order Status'),className='font-weight-bold text-primary  h6  text-center'),
-                                    ], sm=12, md=6, lg=6)
-                                ])
-                            ],
-                            className="pretty_container",
-                        ),
-                    ),
-                ],
-                className="shadow-lg p-12 mb-5 bg-white rounded",
-            ),
 
         ],
         id="mainContainer",

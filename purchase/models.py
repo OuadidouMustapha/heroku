@@ -28,6 +28,9 @@ class Order(CommonMeta):
     ordered_at = models.DateField(blank=True, null=True)
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, blank=True, null=True)
 
+    def __str__(self):
+        return f'{self.reference}'
+
 class OrderDetail(CommonMeta):
     order = models.ForeignKey(
         Order, on_delete=models.CASCADE, blank=True, null=True)
@@ -35,8 +38,7 @@ class OrderDetail(CommonMeta):
         Warehouse, on_delete=models.CASCADE, blank=True, null=True,related_name='purchase_orderdetail_set')
     product = models.ForeignKey(
         Product, on_delete=models.CASCADE, blank=True, null=True,related_name='purchase_orderdetail_set')  
-    ordered_quantity = models.DecimalField(
-        max_digits=11, decimal_places=2, blank=True, null=True)
+    ordered_quantity = models.IntegerField( blank=True, null=True)
     unit_price = models.DecimalField(
         max_digits=11, decimal_places=2, blank=True, null=True)
     desired_at = models.DateTimeField(blank=True, null=True)
@@ -74,8 +76,7 @@ class ReceiptDetail(CommonMeta):
         Warehouse, on_delete=models.CASCADE, blank=True, null=True)
     product = models.ForeignKey(
         Product, on_delete=models.CASCADE, blank=True, null=True)
-    receipted_quantity = models.DecimalField(
-        max_digits=11, decimal_places=2, blank=True, null=True)
+    receipted_quantity = models.IntegerField(blank=True, null=True)
     unit_cost = models.DecimalField(
         max_digits=11, decimal_places=2, blank=True, null=True)
     status = models.CharField(
