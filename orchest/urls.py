@@ -35,6 +35,7 @@ urlpatterns = [
     path('inventory/', include('inventory.urls')),
     path('inbox/notifications/',
          include(notifications.urls, namespace='notifications')),
+    path('purchase/', include('purchase.urls')),
 ]
 
 # Enable the debugger toolbar

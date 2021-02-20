@@ -64,9 +64,11 @@ INSTALLED_APPS = [
     'django_tables2',
     'django_select2',
     'notifications',
+    'rest_framework',
     # 'import_export_celery',
     'inventory.apps.InventoryConfig',
     'rest_framework',
+    'purchase.apps.PurchaseConfig',
 ]
 
 MIDDLEWARE = [
@@ -188,6 +190,25 @@ PLOTLY_DASH = {
     # Name of view wrapping function
     "view_decorator": "django_plotly_dash.access.login_required",
 }
+# TODO REST API AFTER
+# REST_FRAMEWORK = {
+#     # Use Django's standard `django.contrib.auth` permissions,
+#     # or allow read-only access for unauthenticated users.
+#     'DEFAULT_RENDERER_CLASSES': (
+#         'rest_framework.renderers.JSONRenderer',
+#     ),
+#     'DEFAULT_AUTHENTICATION_CLASSES': (
+#     'rest_framework.authentication.SessionAuthentication',
+#     ),
+#     'DEFAULT_PERMISSION_CLASSES': (
+#         'rest_framework.permissions.IsAuthenticated',
+#     ),
+#     'DEFAULT_FILTER_BACKENDS': ('rest_framework.filters.DjangoFilterBackend',),
+#     'PAGE_SIZE': 100,
+
+#     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+
+# }
 
 
 # Static files (CSS, JavaScript, Images)
