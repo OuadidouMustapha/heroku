@@ -60,6 +60,7 @@ def init_graph_and_dataframe(n_clicks, *args, **kwargs):
         hide_btn_review = False
         hide_btn_save = False
     if user.has_perm('forecasting.can_validate_version') and (versiondetail_obj.approved_by != None and user.id == versiondetail_obj.approved_by.id):
+        hide_btn_save = False
         hide_btn_approve = False
         hide_btn_reject = False
 
@@ -237,8 +238,6 @@ def init_graph_and_dataframe(n_clicks, *args, **kwargs):
         ascending=True,
     )
 
-
-
     # Get orders
     order_qs = get_order_history_qs(versiondetail_id)
     order_df = read_frame(order_qs)
@@ -248,7 +247,6 @@ def init_graph_and_dataframe(n_clicks, *args, **kwargs):
 
     order_df['order__ordered_at'] = order_df['order__ordered_at'].astype(
         'datetime64[ns]')
-
 
     # Group data and prepare the dataframe for the plot
     order_df = order_df.groupby(
@@ -279,8 +277,6 @@ def init_graph_and_dataframe(n_clicks, *args, **kwargs):
         ascending=True,
     )
 
-
-    
     # Convert datetime to date
     target_df['targeted_date'] = target_df['targeted_date'].dt.date
 
@@ -297,7 +293,6 @@ def init_graph_and_dataframe(n_clicks, *args, **kwargs):
     merged_df = merged_df[['date', 'targeted_quantity', 'ordered_quantity', 'planned_quantity',
                            'forecasted_quantity', 'edited_forecasted_quantity']]
     merged_df = merged_df.sort_values('date')
-
 
     # Plot the figure
     # Add targeted_quantity to graph
@@ -339,27 +334,26 @@ def init_graph_and_dataframe(n_clicks, *args, **kwargs):
             name='ordered_quantity',
         )
     ])
-    
+
     # Convert date to year-month
     # merged_df['date'] = pd.to_datetime(merged_df['date']).dt.to_period('M')
     # merged_df['date'] = merged_df['date'].apply(lambda x: x.strftime('%B-%Y'))
 
     # FIXME Add empty columns to the dataframe (to be deleted)
-    added_columns = ['objectif_famille', 'prev_famille', 'capacité_famille', 'prev_total', 'objectif_total']
+    added_columns = ['objectif_famille', 'prev_famille',
+                     'capacité_famille', 'prev_total', 'objectif_total']
     for c in added_columns:
         merged_df[c] = ''
 
-    merged_df['planned_quantity'] = prng.randint(0, 50, size=len(merged_df.index))
-
-    
-
+    merged_df['planned_quantity'] = prng.randint(
+        0, 50, size=len(merged_df.index))
 
     # Output datatable
     forecast_columns = [
         {
             'name': i,
             'id': i,
-            'editable': True if (i == 'edited_forecasted_quantity' and user.has_perm('forecasting.can_request_review')) else False,
+            'editable': True if i == 'edited_forecasted_quantity' else False,
         } for i in merged_df.columns
     ]
     forecast_data = merged_df.to_dict('records')
@@ -429,7 +423,7 @@ def init_graph_and_dataframe(n_clicks, *args, **kwargs):
                     id=ids.BUTTON_EVENT_ADD,
                     className="btn btn-xs btn-success my-3",
                     hidden=hide_btn_event_save,
-                    disabled=True
+                    # disabled=True
                 ),
                 html.Button(
                     [html.I(className="fas fa-sync mr-2"), _('Save & update')],
@@ -666,8 +660,6 @@ def on_click_save_edited_forecast(n_clicks, columns, data, * args, **kwargs):
         forecast_df['forecasted_quantity_by_circuit_by_month']
     forecast_df['new_edited_forecasted_quantity'] = forecast_df['new_edited_forecasted_quantity'].astype(
         int)
-
-
 
     # Bulk update edited forecasts in database
     forecast_objs = [

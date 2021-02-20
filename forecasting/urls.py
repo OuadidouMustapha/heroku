@@ -44,6 +44,9 @@ urlpatterns = [
     path('forchest/<int:versiondetail_id>',
          views.ForchestView.as_view(), name='forchest'),
     path('version-detail', views.VersionDetailView.as_view(), name='version_detail'),
+    path('bulk_confirm_versiondetail', views.bulk_confirm_versiondetail, name='bulk_confirm_versiondetail'),
+    path('bulk_send_for_review_versiondetail', views.bulk_send_for_review_versiondetail,
+         name='bulk_send_for_review_versiondetail'),
 
 #     url(r'^input_interface/(?P<pk>\d+)/$',
 #         views.UpdateProductView.as_view(), name='input_interface_update'),

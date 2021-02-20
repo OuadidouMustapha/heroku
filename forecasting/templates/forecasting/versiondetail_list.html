@@ -58,10 +58,68 @@
                 <div class="collapse show" id="collapse-version-list" style="">
 
                     <div class="card-body">
+                        <form action="{% url "forecasting:bulk_confirm_versiondetail" %}" method="post">
+                        {% csrf_token %}
+                            {% render_table table %}
+                            <button class="btn btn-xs btn-primary" type="submit" disabled>{% trans "Submit" %}</button>
+                            <button class="btn btn-danger" disabled><i class="fas fa-share pr-2"></i>{% trans "Send for review" %}</button>
+                        </form>
 
-                        {% render_table table %}
-                        <button class="btn btn-primary" disabled><i class="fas fa-check-circle pr-2"></i>{% trans "Confirm" %}</button>
-                        <button class="btn btn-danger" disabled><i class="fas fa-share pr-2"></i>{% trans "Send for review" %}</button>
+
+
+
+                            {% comment %} <!-- Submit review -->
+                            <button type="button" class="btn btn-xs btn-danger mb-3" data-toggle="modal" data-target="#submit-review-modal">
+                                {% trans 'Submit for review'%}
+                            </button>
+                            <!-- Modal -->
+                            <div class="modal fade" id="submit-review-modal" tabindex="-1" role="dialog" aria-labelledby="submit-review-modal-label" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="submit-review-modal-label">{% trans 'Submit for review'%}</h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+
+
+                                        {% with approved_status='Approved' %}     
+                                            {% if versiondetail.status != approved_status %}
+                                                <form  action="{% url 'forecasting:bulk_send_for_review_versiondetail' %}" method="post">
+                                                    <div class="modal-body">
+                                                        <div class="form-group">
+                                                            <label>{% trans 'Select the user'%}</label>
+                                                            <select  class="form-control" id="user" name="user_id" >
+                                                                {% for usr in supervisor_users %}
+                                                                    <option value="{{usr.id}}">{{usr.first_name}} {{usr.last_name}} ({{usr.username}})</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="submit" class="btn btn-primary">{% trans 'Submit'%}</button>
+                                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans 'Close'%}</button>
+                                                    </div>
+                                                </form>
+                                            {% else %}
+                                                <div class="modal-body">
+                                                    <div> This version has been reviewed and it is already approved by {{ versiondetail.approved_by.first_name }} ({{ versiondetail.approved_by.username }})</div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans 'Close'%}</button>
+                                                </div>
+                                            {% endif %}
+                                        {% endwith %}
+
+
+                                    </div>
+                                </div>
+                            </div> {% endcomment %}
+
+
+
+
                     </div>
                 </div>
             </div>
@@ -76,8 +134,11 @@
 // Add select all option TODO not working when one row is unselected
 function selectAllElements(source) {
     checkboxes = document.getElementsByName('selection');
+    console.log(checkboxes)
     for(var i in checkboxes)
         checkboxes[i].checked = source.checked;
+        console.log('checkboxes after ' + checkboxes[i].checked)
+    
 }
 
 // Make button disabled if no row is selected

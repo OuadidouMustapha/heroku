@@ -49,8 +49,8 @@ class VersionDetailTable(tables.Table):
         orderable=False)
     selection = CheckBoxColumn(
         accessor='id',
-        attrs={'th__input': {'onclick': 'selectAllElements(this)'}},
-        orderable=False
+        # attrs={'th__input': {'onclick': 'selectAllElements(this)'}},
+        # orderable=False
     )
 
     class Meta:
