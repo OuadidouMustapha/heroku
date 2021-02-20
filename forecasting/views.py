@@ -1,5 +1,6 @@
 # from django.shortcuts import render
 # from django.core.files.storage import FileSystemStorage
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 import logging
 from django.core.exceptions import ObjectDoesNotExist
@@ -716,8 +717,57 @@ class VersionDetailView(LoginRequiredMixin, SingleTableMixin, FilterView):
 
     template_name = "forecasting/versiondetail_list.html"
     paginate_by = 20
+    # TODO send list of user that are able to review request 
+    # FIXME problem: how to get checkbox column input (selected ids) in the second form (with modal)
+    # def get_context_data(self, **kwargs):
+    #     context = super().get_context_data(**kwargs)
+
+    #     # User objects
+    #     _GROUP_ALLOWED_TO_REVIEW = 'n1'
+    #     context['supervisor_users'] = CustomUser.objects.filter(
+    #         groups__name=_GROUP_ALLOWED_TO_REVIEW)
+    #     return context
+
 
     # def get_queryset(self):
     #     queryset = super().get_queryset()
     #     queryset = queryset.distinct('product', 'circuit', 'version')
     #     return queryset
+
+@login_required
+def bulk_confirm_versiondetail(request):
+    if request.method == 'POST':
+        # Get selected ids from checkbox table column and convert it to int
+        versiondetail_ids = request.POST.getlist('selection')
+        versiondetail_ids = list(map(int, versiondetail_ids))
+
+        # Update the objects
+        VersionDetail.objects.filter(
+            id__in=versiondetail_ids
+        ).update(
+            created_by=request.user,
+            status=VersionDetail.CONFIRMED,
+        )
+        # Success message
+        messages.success(
+            request, _('Data updated successfully.'))
+        return redirect(reverse('forecasting:version_detail'))
+
+@login_required
+def bulk_send_for_review_versiondetail(request):
+    if request.method == 'POST':
+        # Get selected ids from checkbox table column
+        versiondetail_ids = request.POST.getlist('selection')
+        # Convert the result to int
+        versiondetail_ids = list(map(int, versiondetail_ids))
+        VersionDetail.objects.filter(
+            id__in=versiondetail_ids
+        ).update(
+            created_by=request.user,
+            approved_by=request.POST.get('payment_id', None),
+            status=VersionDetail.CONFIRMED,
+        )
+        # Success message
+        messages.success(
+            request, _('Data updated successfully.'))
+        return redirect(reverse('forecasting:version_detail'))
