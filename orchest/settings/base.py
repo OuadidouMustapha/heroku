@@ -331,7 +331,7 @@ LOGGING = {
         },
     }
 }
-
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_URL = '/static/'
 if DEBUG:
    STATICFILES_DIRS = [
