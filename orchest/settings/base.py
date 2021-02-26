@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 from django.contrib.messages import constants as messages
 import os
 from decouple import config, Csv
+import django_on_heroku
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', cast=bool)
@@ -214,8 +215,8 @@ PLOTLY_DASH = {
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
-STATIC_URL = os.getenv('STATIC_URL', '/static/')
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+# STATIC_URL = os.getenv('STATIC_URL', '/static/')
+# STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 # TODO config AWS S3 settings and add an environment variable
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -330,3 +331,14 @@ LOGGING = {
         },
     }
 }
+
+STATIC_URL = '/static/'
+if DEBUG:
+   STATICFILES_DIRS = [
+   os.path.join(BASE_DIR, 'static'),
+   ]
+else:
+   STATIC_ROOT = os.path.join(BASE_DIR,'static')
+
+# Activate Django-Heroku.
+django_heroku.settings(locals())
