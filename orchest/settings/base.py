@@ -19,7 +19,7 @@ import django_on_heroku
 DEBUG = config('DEBUG', cast=bool)
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
@@ -332,13 +332,12 @@ LOGGING = {
     }
 }
 
-STATIC_URL = '/static/'
-if DEBUG:
-   STATICFILES_DIRS = [
-   os.path.join(BASE_DIR, 'static'),
-   ]
-else:
-   STATIC_ROOT = os.path.join(BASE_DIR,'static')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+STATIC_ROOT = os.path.normpath(os.path.join(BASE_DIR, 'staticfiles'))
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, 'static'),
+)
 
 # Activate Django-Heroku.
 django_heroku.settings(locals())
