@@ -18,7 +18,8 @@ from decouple import config, Csv
 DEBUG = config('DEBUG', cast=bool)
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+BASE_DIR = os.path.dirname(os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
@@ -65,6 +66,8 @@ INSTALLED_APPS = [
     'notifications',
     # 'import_export_celery',
     'inventory.apps.InventoryConfig',
+    'rest_framework',
+    'purchase.apps.PurchaseConfig',
 ]
 
 MIDDLEWARE = [
@@ -120,18 +123,17 @@ DATABASES = {
 }
 
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
-LANGUAGE_CODE = 'fr'  # 'en-us' 'fr'
+LANGUAGE_CODE = 'en-us'  # 'en-us' 'fr'
 TIME_ZONE = 'Africa/Casablanca'
 USE_I18N = True
 USE_L10N = True
 # USE_TZ = True
 
 LOCALE_PATHS = (
-  os.path.abspath(os.path.join(BASE_DIR, 'conf', 'locale')),
+    os.path.abspath(os.path.join(BASE_DIR, 'conf', 'locale')),
 )
 
 
@@ -187,6 +189,25 @@ PLOTLY_DASH = {
     # Name of view wrapping function
     "view_decorator": "django_plotly_dash.access.login_required",
 }
+# TODO REST API AFTER
+# REST_FRAMEWORK = {
+#     # Use Django's standard `django.contrib.auth` permissions,
+#     # or allow read-only access for unauthenticated users.
+#     'DEFAULT_RENDERER_CLASSES': (
+#         'rest_framework.renderers.JSONRenderer',
+#     ),
+#     'DEFAULT_AUTHENTICATION_CLASSES': (
+#     'rest_framework.authentication.SessionAuthentication',
+#     ),
+#     'DEFAULT_PERMISSION_CLASSES': (
+#         'rest_framework.permissions.IsAuthenticated',
+#     ),
+#     'DEFAULT_FILTER_BACKENDS': ('rest_framework.filters.DjangoFilterBackend',),
+#     'PAGE_SIZE': 100,
+
+#     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+
+# }
 
 
 # Static files (CSS, JavaScript, Images)
@@ -206,7 +227,7 @@ AUTH_USER_MODEL = 'account.CustomUser'
 LOGIN_URL = '/account/login'
 # Redirect page after login
 LOGIN_REDIRECT_URL = "/stock"
-# Redirect page after logout    
+# Redirect page after logout
 LOGOUT_REDIRECT_URL = "/account/login"
 
 # # SMTP Server TODO use MailGun or SendGrid
@@ -225,8 +246,8 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 EMAIL_USE_TLS = True
 
 
-# raise th emax limit for file upload 
-# Default: 2621440 (i.e. 2.5 MB) 
+# raise th emax limit for file upload
+# Default: 2621440 (i.e. 2.5 MB)
 DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440*7
 
 ###### DRAFT CELERY DJANGO##########
@@ -253,6 +274,34 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 # Use the built-in Bootstrap4 template for django-tables2
 DJANGO_TABLES2_TEMPLATE = "django_tables2/bootstrap4.html"
 
+# DRF settings
+REST_FRAMEWORK = {
+    # TODO Use json version DRF in production mode
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ),
+
+
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ),
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+    )
+
+}
+
+# JWT response handler
+JWT_AUTH = {
+    'JWT_RESPONSE_PAYLOAD_HANDLER': 'account.utils.my_jwt_response_handler'
+}
+
 # CORS setting
 # CORS_ALLOWED_ORIGINS = [
 #     'orchestanalytics.com',
@@ -262,6 +311,10 @@ DJANGO_TABLES2_TEMPLATE = "django_tables2/bootstrap4.html"
 
 # FIXME Security warning! Allow CORS for trusted hosts only
 CORS_ORIGIN_ALLOW_ALL = True
+# CORS_ORIGIN_WHITELIST = (
+#     'localhost:3000/'
+# )
+
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to

@@ -566,7 +566,7 @@ def plot_pie_statuts_product_figure(selected_products, selected_categories, sele
                                     start_date, end_date):
     results = OrderDetail.objects.filter(
         product__in=selected_products,
-        # product__category__in=selected_categories,
+        product__category__in=selected_categories,
         product__fmr_segmentation__in=selected_fmr,
         product__abc_segmentation__in=selected_abc,
         order__ordered_at__gte=start_date,

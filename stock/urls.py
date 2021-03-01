@@ -4,6 +4,7 @@ from stock.dashboards import stock_dio
 from stock.dashboards import stock_pareto
 from stock.dashboards import warehouse_location
 from . import views
+from . import viewsets
 
 app_name = 'stock'
 urlpatterns = [
@@ -37,6 +38,10 @@ urlpatterns = [
          name='purchase_index'),
     path('', views.DashboardIndexView.as_view(),
          name='index'),
+    # API urls
+    path('api/products/', viewsets.ProductListCreate.as_view(), name='api_product'),
+    #     path('api/products/list', viewsets.ProductList.as_view(),
+    #          name='api_product_list'),
+
 
 ]
-

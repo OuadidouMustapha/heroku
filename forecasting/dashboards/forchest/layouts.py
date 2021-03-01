@@ -9,9 +9,11 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 from django.utils.translation import gettext as _
+from django.shortcuts import get_object_or_404
 
 #  Get list of users that can approve a version detail
 _group_name = 'n1'
+# group_obj = get_object_or_404(models.Group, name=_group_name)
 group_obj = models.Group.objects.get(name=_group_name)
 _group_users = group_obj.user_set.all()
 _group_users = list(_group_users.annotate(
@@ -20,7 +22,7 @@ _group_users = list(_group_users.annotate(
 # _datatable = dbc.Row([
 #     dbc.Col([
 #         helpers.get_datatable_card(
-#             ids.DATABLE_FORECAST, 
+#             ids.DATABLE_FORECAST,
 #             style_data_conditional=[{
 #                 'if': {'column_editable': True},
 #                 'backgroundColor': 'WhiteSmoke',
@@ -60,7 +62,7 @@ _charts = html.Div([
     html.Div([
         dcc.Loading(
             dbc.Alert(
-                _('Data saved successfully'), 
+                _('Data saved successfully'),
                 id=ids.MESSAGE_SUCCESS_SAVE,
                 color='success',
                 dismissable=True,
@@ -95,19 +97,19 @@ _charts = html.Div([
 
     # Buttons
     html.Div([
-        
+
 
         html.Button(
             [html.I(className="fas fa-check mr-2"), _('Approve')],
             id=ids.BUTTON_APPROVE,
             className="btn btn-xs btn-success mb-3 mx-3",
-            hidden=True            
+            hidden=True
         ),
         html.Button(
             [html.I(className="fas fa-times mr-2"), _('Reject')],
             id=ids.BUTTON_REJECT,
             className="btn btn-xs btn-danger mb-3",
-            hidden=True            
+            hidden=True
         ),
         html.Button(
             [html.I(className="fas fa-check-circle mr-2"), _('Confirm')],
@@ -119,7 +121,7 @@ _charts = html.Div([
             [html.I(className="fas fa-share mr-2"), _('Send for review')],
             id=ids.BUTTON_SUBMIT_REVIEW,
             className="btn btn-xs btn-danger mb-3",
-            hidden=True            
+            hidden=True
         ),
         dbc.Modal(
             [
@@ -151,7 +153,8 @@ _charts = html.Div([
                             className="btn btn-xs btn-danger mb-3 mx-3",
                         ),
                         dbc.Button(
-                            [html.I(className="fas fa-check mr-2"), _('Submit')],
+                            [html.I(className="fas fa-check mr-2"),
+                             _('Submit')],
                             id=ids.MODAL_BUTTON_SUBMIT,
                             className="btn btn-xs btn-primary mb-3",
                         ),
@@ -162,7 +165,6 @@ _charts = html.Div([
         ),
     ])
 ], className='card shadow mb-4 py-3 mx-3')
-
 
 
 # filter_container = html.Div([_classification_filter, _segmentation_filter])
