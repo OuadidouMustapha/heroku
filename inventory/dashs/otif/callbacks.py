@@ -11,7 +11,7 @@ from django_pandas.io import read_frame
 import cufflinks as cf
 import numpy as np
 from plotly.subplots import make_subplots
-from django.db.models import F, ExpressionWrapper, DateTimeField,IntegerField,Case, CharField, Value, When,Sum
+from django.db.models import F, ExpressionWrapper, DateTimeField,IntegerField,Case, CharField, Value, When,Sum,DecimalField
 from multiprocessing import  Pool
 import multiprocessing as mp
 from django.db import connection

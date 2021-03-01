@@ -90,4 +90,4 @@ class ReceiptDetail(CommonMeta):
         default=A,
         null=True, blank=True
     )
-    receipt_at = models.DateTimeField(auto_now_add=True)
+    receipt_at = models.DateTimeField(blank=True, null=True)

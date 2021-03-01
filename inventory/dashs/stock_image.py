@@ -126,6 +126,16 @@ layout = dict(
     autosize=True,
     automargin=True,
     hovermode="closest",
+    # width=600,
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=1,
+        xanchor="right",
+        x=1
+    ),
+    height=700,
+    legend_orientation='h',
     plot_bgcolor="#F9F9F9",
 )
 card_content = [
@@ -245,155 +255,196 @@ def body_container():
                     )
                 ], sm=12, md=12, lg=12)]),
             dcc.Store(id="aggregate_data_id"),
-            html.Div(id="output-clientside"),
-                                        html.Div([
-                                    # Create element to hide/show, in this case an 'Input Component'
-                                    dash_table.DataTable(
-                                        id='computed-table',
-                                        columns=
-                                        [
-                                            {'id': 'Rupture', 'name': 'Valeur Min', 'editable': False},
-                                            {'id': 'Risque Rupture', 'name': 'Valeur Max', 'editable': False},
-                                            {'id': 'Bon Stock', 'name': 'Valeur Moyenne', 'editable': False},
-                                            {'id': 'Sur Stock', 'name': 'Écart type ', 'editable': False},
+            html.Div(
+                [
+                    html.Div(id="output-clientside"),
+                    dcc.Loading(
+                        dbc.Row([
+                            dbc.Col([
+                                html.Div(
+                                    [
 
-                                        ],
-                                        data=[
-                                            {'Rupture': ''}, {'Rupture': ''}
-                                        ],
-                                        style_data_conditional=[
-                                            {
-                                                'if':
-                                                    {
-                                                        'column_id': 'Rupture',
-                                                    },
-                                                'color': 'white',
-                                                'width': '80px',
-                                                'background-image': 'linear-gradient(to right, rgb(200, 0, 0), black)',
-                                                'border': 'linear-gradient(to right, rgb(200, 0, 0), black))',
-                                                'text-align': 'center',
-                                                'font_size': '18px',
-                                            },
-                                            {
+                                        dcc.Graph(id="aggregate_graph")
 
-                                                'if':
-                                                    {
-                                                        'column_id': 'Risque Rupture',
-                                                    },
-                                                'background-image': 'linear-gradient(to right, black, black)',
-                                                'border': 'linear-gradient(to right, black, black)',
-                                                'color': 'white',
-                                                'width': '80px',
-                                                'text-align': 'center',
-                                                'font_size': '18px',
-                                            },
-                                            {
-
-                                                'if':
-                                                    {
-                                                        'column_id': 'Bon Stock',
-                                                    },
-                                                'background-image': 'linear-gradient(to right, black, black)',
-                                                'border': 'linear-gradient(to right, black, black)',
-                                                'color': 'white',
-                                                'width': '80px',
-                                                'text-align': 'center',
-                                                'font_size': '18px',
-                                            },
-                                            {
-
-                                                'if':
-                                                    {
-                                                        'column_id': 'Sur Stock',
-                                                    },
-                                                'background-image': 'linear-gradient(to right, black, rgb(200, 0, 0))',
-                                                'border': 'linear-gradient(to right, black, rgb(200, 0, 0))',
-                                                'color': 'white',
-                                                'width': '80px',
-                                                'font_size': '18px',
-                                                'text-align': 'center'
-                                            },
-                                        ],
-                                        style_header_conditional=[
-                                            {
-
-                                                'if':
-                                                    {
-                                                        'column_id': 'Rupture',
-                                                    },
-                                                'background-image': 'linear-gradient(to right, rgb(200, 0, 0), black)',
-                                                'border': 'linear-gradient(to right, rgb(200, 0, 0), black)',
-                                                'color': 'white',
-                                                'width': '80px',
-                                                'font_size': '18px',
-                                                'text-align': 'center'
-                                            },
-                                            {
-
-                                                'if':
-                                                    {
-                                                        'column_id': 'Risque Rupture',
-                                                    },
-                                                'background-image': 'linear-gradient(to right, black,black)',
-                                                'border': 'linear-gradient(to right, black,black)',
-                                                'color': 'white',
-                                                'width': '80px',
-                                                'font_size': '18px',
-                                                'text-align': 'center'
-                                            },
-                                            {
-
-                                                'if':
-                                                    {
-                                                        'column_id': 'Bon Stock',
-                                                    },
-                                                'background-image': 'linear-gradient(to right, black,black)',
-                                                'border': 'linear-gradient(to right,black,black)',
-                                                'color': 'white',
-                                                'width': '80px',
-                                                'font_size': '18px',
-                                                'text-align': 'center'
-                                            },
-                                            {
-
-                                                'if':
-                                                    {
-                                                        'column_id': 'Sur Stock',
-                                                    },
-                                                'background-image': 'linear-gradient(to right, black,rgb(200, 0, 0))',
-                                                'border': 'linear-gradient(to right,black,rgb(200, 0, 0))',
-                                                'color': 'white',
-                                                'width': '80px',
-                                                'font_size': '18px',
-                                                'text-align': 'center'
-                                            },
-                                        ],
-                                    ),
-                                    html.Div(
-                                        [
+                                    ],
+                                    className="",
+                                ),
+                            ],sm=12, md=7, lg=7),
+                            dbc.Col([
+                                html.Div([
+                                    dbc.Row([
+                                        dbc.Row([
                                             html.Div(
-                                                [dcc.Graph(id="pie")],
-                                                className="pretty_container",
+                                                [
+                                                    html.Div(
+                                                        [dcc.Graph(id="pie")],
+                                                        className="pretty_container",
+                                                    ),
+                                                ],
+                                                className="flex-display",
                                             ),
-                                        ],
-                                        className="flex-display",
-                                    ),
+                                        
+                                        ]),
+                                        dbc.Row([
+                                            dash_table.DataTable(
+                                                id='computed-table',
+                                                columns=
+                                                [
+                                                    {'id': 'Valeur', 'name': '', 'editable': False},
+                                                    {'id': 'Rupture', 'name': 'Min', 'editable': False},
+                                                    {'id': 'Risque Rupture', 'name': 'Max', 'editable': False},
+                                                    {'id': 'Bon Stock', 'name': 'Moyenne', 'editable': False},
+                                                    {'id': 'Sur Stock', 'name': 'Écart type ', 'editable': False},
+
+                                                ],
+                                                data=[
+                                                    {'Valeur': 'Valeur'}, {'Valeur': 'Date'}
+                                                ],
+                                                style_data_conditional=[
+                                                    {
+                                                        'if':
+                                                            {
+                                                                'column_id': 'Rupture',
+                                                            },
+                                                        # 'color': 'white',
+                                                        'width': '80px',
+                                                        # 'background-image': 'linear-gradient(to right, black, black)',
+                                                        # 'border': 'linear-gradient(to right, black, black))',
+                                                        'text-align': 'center',
+                                                        'font_size': '18px',
+                                                    },
+                                                    {
+                                                        'if':
+                                                            {
+                                                                'column_id': 'Valeur',
+                                                            },
+                                                        # 'color': 'white',
+                                                        'width': '80px',
+                                                        # 'background-image': 'linear-gradient(to right, black, black)',
+                                                        # 'border': 'linear-gradient(to right, black, black))',
+                                                        'text-align': 'center',
+                                                        'font_size': '18px',
+                                                    },
+                                                    {
+
+                                                        'if':
+                                                            {
+                                                                'column_id': 'Risque Rupture',
+                                                            },
+                                                        # 'background-image': 'linear-gradient(to right, black, black)',
+                                                        # 'border': 'linear-gradient(to right, black, black)',
+                                                        # 'color': 'white',
+                                                        'width': '80px',
+                                                        'text-align': 'center',
+                                                        'font_size': '18px',
+                                                    },
+                                                    {
+
+                                                        'if':
+                                                            {
+                                                                'column_id': 'Bon Stock',
+                                                            },
+                                                        # 'background-image': 'linear-gradient(to right, black, black)',
+                                                        # 'border': 'linear-gradient(to right, black, black)',
+                                                        # 'color': 'white',
+                                                        'width': '100px',
+                                                        'text-align': 'center',
+                                                        'font_size': '18px',
+                                                    },
+                                                    {
+
+                                                        'if':
+                                                            {
+                                                                'column_id': 'Sur Stock',
+                                                            },
+                                                        # 'background-image': 'linear-gradient(to right, black, rgb(200, 0, 0))',
+                                                        # 'border': 'linear-gradient(to right, black, rgb(200, 0, 0))',
+                                                        # 'color': 'white',
+                                                        'width': '180px',
+                                                        'font_size': '18px',
+                                                        'text-align': 'center'
+                                                    },
+                                                ],
+                                                style_header_conditional=[
+                                                    {
+
+                                                        'if':
+                                                            {
+                                                                'column_id': 'Valeur',
+                                                            },
+                                                        # 'background-image': 'linear-gradient(to right, rgb(200, 0, 0), black)',
+                                                        # 'border': 'linear-gradient(to right, rgb(200, 0, 0), black)',
+                                                        # 'color': 'white',
+                                                        'width': '80px',
+                                                        'font_size': '18px',
+                                                        'text-align': 'center'
+                                                    },
+                                                    {
+
+                                                        'if':
+                                                            {
+                                                                'column_id': 'Rupture',
+                                                            },
+                                                        # 'background-image': 'linear-gradient(to right, black, black)',
+                                                        # 'border': 'linear-gradient(to right, black, black)',
+                                                        # 'color': 'white',
+                                                        'width': '80px',
+                                                        'font_size': '18px',
+                                                        'text-align': 'center'
+                                                    },
+                                                    {
+
+                                                        'if':
+                                                            {
+                                                                'column_id': 'Risque Rupture',
+                                                            },
+                                                        # 'background-image': 'linear-gradient(to right, black,black)',
+                                                        # 'border': 'linear-gradient(to right, black,black)',
+                                                        # 'color': 'white',
+                                                        'width': '80px',
+                                                        'font_size': '18px',
+                                                        'text-align': 'center'
+                                                    },
+                                                    {
+
+                                                        'if':
+                                                            {
+                                                                'column_id': 'Bon Stock',
+                                                            },
+                                                        # 'background-image': 'linear-gradient(to right, black,black)',
+                                                        # 'border': 'linear-gradient(to right,black,black)',
+                                                        # 'color': 'white',
+                                                        'width': '80px',
+                                                        'font_size': '18px',
+                                                        'text-align': 'center'
+                                                    },
+                                                    {
+
+                                                        'if':
+                                                            {
+                                                                'column_id': 'Sur Stock',
+                                                            },
+                                                        # 'background-image': 'linear-gradient(to right, black,rgb(200, 0, 0))',
+                                                        # 'border': 'linear-gradient(to right,black,rgb(200, 0, 0))',
+                                                        # 'color': 'white',
+                                                        'width': '180px',
+                                                        'font_size': '18px',
+                                                        'text-align': 'center'
+                                                    },
+                                                ],
+                                            ),
+                                        ]),
+                                    ]),
+                                    # Create element to hide/show, in this case an 'Input Component'
                                     # html.Div(
                                     #     [dcc.Graph(id="pie")],
                                     #     className="",
                                     # ),
-                                ], style={'display': 'none'}, id='div_table'
-                                # <-- This is the line that will be changed by the dropdown callback
-                            ),
-            html.Div(
-                [
-                    html.Div(
-                        [
-                            dcc.Loading(
-                                dcc.Graph(id="aggregate_graph")
-                            )
-                        ],
-                        className="",
+                                    ], style={'display': 'none'}, id='div_table'
+                                    # <-- This is the line that will be changed by the dropdown callback
+                                ),
+                            ],sm=12, md=5, lg=5)
+                        ]),
                     ),
                     dcc.Loading(
                         html.Div([], id='data_value_id', className='font-weight-bold text-primary mb-1 float-right'),
@@ -458,7 +509,6 @@ def make_aggregate_figure(selected_products, selected_statuts, selected_location
                 "marker": {'colors': ['rgb(255, 0, 0)', 'rgb(255, 153, 0)', 'rgb(0, 204, 102)', 'rgb(128, 0, 0)']},
                 "textinfo": "percent+label",
                 "textfont": {'color': '#FFFFFF', 'size': 15},
-
                 "hole": .4,
                 "type": "pie"
             }],
@@ -494,7 +544,6 @@ def make_aggregate_figure(selected_products, selected_statuts, selected_location
             Q(operation_date__gte=start_date) &
             Q(operation_date__lte=end_date)).values('product__reference', 'operation_date', 'quantity').order_by(
             'product__reference','product__id','operation_date')
-
         df = pd.DataFrame(list(operations))
 
         df_results = pd.DataFrame(list(results.values()))
@@ -539,11 +588,10 @@ def make_aggregate_figure(selected_products, selected_statuts, selected_location
                             if (len(newDf) != 0):
                                 for index, row in newDf.iterrows():
                                     y_quantity[-1] += row['quantity']
-                                    # Boucle for coorection if you dont want coorection comment the this bloc
+                                    # Boucle for correction if you dont want correction comment the this bloc
 
                             for result in results:
-                                if result['check_date'] == date and result['product__reference'] == stock_image[
-                                    'product__reference']:
+                                if result['check_date'] == date and result['product__reference'] == stock_image['product__reference']:
                                     y_quantity[-1] = result['sum']
 
                             if y_quantity[-1] >= max_data['value']:
@@ -575,7 +623,7 @@ def make_aggregate_figure(selected_products, selected_statuts, selected_location
                             if (len(newDf) != 0):
                                 for index, row in newDf.iterrows():
                                     y_past_quantity[-1] -= row['quantity']
-                            # Boucle for coorection if you dont want coorection comment the this bloc 
+                            # Boucle for correction if you dont want correction comment the this bloc 
                             for result in results:
                                 if result['check_date'] == date and result['product__reference'] == stock_image[
                                     'product__reference']:
@@ -585,7 +633,7 @@ def make_aggregate_figure(selected_products, selected_statuts, selected_location
                                 max_data['value'] = y_past_quantity[-1]
                                 max_data['date'] = date
 
-                            if y_quantity[-1] <= min_data['value']:
+                            if y_past_quantity[-1] <= min_data['value']:
                                 min_data['value'] = y_past_quantity[-1]
                                 min_data['date'] = date
                     else:
@@ -600,6 +648,11 @@ def make_aggregate_figure(selected_products, selected_statuts, selected_location
                     y_total = y_past_quantity[::-1]
                     y_total.extend(y_quantity[2::])
 
+                    if min_data['value']<=0:
+                        min_data['value'] = 0
+                    if max_data['value']<=0:
+                        max_data['value'] = 0
+
                     all_y_data.extend(y_total)
 
                     data.append(
@@ -613,8 +666,8 @@ def make_aggregate_figure(selected_products, selected_statuts, selected_location
                             marker=dict(symbol="diamond-open"),
                         ),
                     )
-                    # ---------------------------------------------------------------------{end calcul stock}---------------------------------------------------------
-            # ---------------------------------------------------{Table}------------------------------------------------------
+        # ---------------------------------------------------------------------{end calcul stock}---------------------------------------------------------
+        # ---------------------------------------------------{Table}------------------------------------------------------
             nbr_rupture = 0
             nbr_risque_rupture = 0
             nbr_bon_stock = 0
@@ -627,7 +680,7 @@ def make_aggregate_figure(selected_products, selected_statuts, selected_location
                 bon_stock = int(value_bon_stock)
 
                 for y in all_y_data:
-                    if y == rupture:
+                    if y <= rupture:
                         nbr_rupture += 1
                     elif y <= risque_rupture and y > rupture:
                         nbr_risque_rupture += 1
@@ -655,15 +708,15 @@ def make_aggregate_figure(selected_products, selected_statuts, selected_location
                     rows[0]['Risque Rupture'] = 'NA'
                 try:
                     rows[0]['Bon Stock'] = mean_data
-                    rows[1]['Bon Stock'] = time.strftime('%d/%m/%Y ', end_time) + ' <--> ' + time.strftime('%d/%m/%Y ',
-                                                                                                           start_time)
+                    # rows[1]['Bon Stock'] = time.strftime('%d/%m/%Y ', end_time) + ' <--> ' + time.strftime('%d/%m/%Y ',start_time)
+                    rows[1]['Bon Stock'] = '---'
 
                 except:
                     rows[0]['Bon Stock'] = 'NA'
                 try:
                     rows[0]['Sur Stock'] = np.around(float(ecart_type_data), 2)
-                    rows[1]['Sur Stock'] = time.strftime('%d/%m/%Y ', end_time) + ' <--> ' + time.strftime('%d/%m/%Y ',
-                                                                                                           start_time)
+                    # rows[1]['Sur Stock'] = time.strftime('%d/%m/%Y ', end_time) + ' <--> ' + time.strftime('%d/%m/%Y ',start_time)
+                    rows[1]['Sur Stock'] = '---'
                 except:
                     rows[0]['Sur Stock'] = 'NA'
                 table_style = {'display': 'block'}
@@ -680,9 +733,9 @@ def make_aggregate_figure(selected_products, selected_statuts, selected_location
                                  9, 8, 4, 4, 5, 6, 2, 9, 9, 4, 6, 9, 9])
                 color_dict = {
                     'Rupture': 'rgb(255, 0, 0)',
-                    'Risque de Rupture': 'rgb(255, 153, 0)',
+                    'Risque de Rupture': 'rgb(255,165,0)',
                     'Bon Stock': 'rgb(0, 204, 102)',
-                    'Sur Stock': 'rgb(128, 0, 0)',
+                    'Sur Stock': 'rgb(255,255,0)',
                 }
 
                 labels = np.unique(crit)  # or simply = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -695,7 +748,7 @@ def make_aggregate_figure(selected_products, selected_statuts, selected_location
                     nbr_rupture, nbr_risque_rupture, nbr_bon_stock, nbr_sur_stock
                 ]
 
-                colors = ['rgb(255, 0, 0)', 'rgb(255, 153, 0)', 'rgb(0, 255, 0)', 'rgb(153, 51, 51)']
+                colors = ['rgb(255, 0, 0)', 'rgb(255,165,0)', 'rgb(0, 255, 0)', 'rgb(255,255,0)']
 
                 fig = go.Figure(
                     data=[
@@ -719,9 +772,12 @@ def make_aggregate_figure(selected_products, selected_statuts, selected_location
                     xaxis_title="X Axis Title",
                     yaxis_title="Y Axis Title",
                     legend_title="Legend Title",
+                    autosize=True,
+                    width=570,
+                    height=540,
                     font=dict(
                         family="Courier New, monospace",
-                        size=18,
+                        size=16,
                         color="black"
                     )
                 )
@@ -791,6 +847,653 @@ def make_aggregate_figure(selected_products, selected_statuts, selected_location
                     marker=dict(symbol="diamond-open"),
                 ),
             )
+   
+   
+
+    elif (groupe_by == 'ProductByWarehouses'):
+
+        data = []
+    
+        results = StockCheck.objects.filter(
+            Q(location__in=selected_locations) & Q(product__category__in=selected_categories) & Q(
+                product__in=[selected_products]) & Q(check_date__gte=start_date) & Q(check_date__lte=end_date)).values(
+            'product__reference','product__id','check_date').order_by('product__reference', 'check_date').annotate(sum=Sum('quantity'))
+
+        operations = Operation.objects.filter(
+            Q(product__in=[selected_products]) &
+            Q(status__in=selected_statuts) &
+            Q(location__in=selected_locations) &
+            Q(product__category__in=selected_categories) &
+            Q(operation_date__gte=start_date) &
+            Q(operation_date__lte=end_date)).values('product__reference', 'operation_date', 'quantity').order_by(
+            'product__reference','product__id','operation_date')
+
+        df = pd.DataFrame(list(operations))
+
+        df_results = pd.DataFrame(list(results.values()))
+
+        if n_clicks > 0 and dates:
+
+            stock_images = StockCheck.objects.filter(
+                Q(product__in=[selected_products]) & Q(status__in=selected_statuts) & Q(
+                    location__in=selected_locations) & Q(product__category__in=selected_categories) & Q(
+                    check_date__in=dates)).values('product__reference', 'product__id', 'check_date').order_by(
+                'product__reference', 'check_date').annotate(sum=Sum('quantity'))
+
+            all_y_data = []
+            if (len(stock_images) > 0):
+                for stock_image in stock_images:
+                    range_futur_date = []
+                    range_past_date = []
+                    range_futur_date = pd.date_range(stock_image['check_date'], end_date)
+                    range_past_date = pd.date_range(start_date, stock_image['check_date'])
+                    range_past_date = range_past_date.sort_values(ascending=False)
+
+                    x_date = []
+                    y_quantity = []
+
+                    max_data = {'value': stock_image['sum'], 'date': stock_image['check_date']}
+
+                    min_data = {'value': stock_image['sum'], 'date': stock_image['check_date']}
+
+                    x_date.append(stock_image['check_date'])
+
+                    y_quantity.append(stock_image['sum'])
+
+                    # ------------------------------------------------- future -------------------------------------------------------------------------
+
+                    if (len(df) != 0 and len(results) != 0):
+                        df_future = df[(df.product__reference == stock_image['product__reference'])]
+
+                        for date in range_futur_date:
+                            x_date.append(date)
+                            y_quantity.append(y_quantity[-1])
+                            newDf = df_future[(df_future.operation_date == date)]
+                            if (len(newDf) != 0):
+                                for index, row in newDf.iterrows():
+                                    y_quantity[-1] += row['quantity']
+                                    # Boucle for correction if you dont want correction comment the this bloc
+
+                            for result in results:
+                                if result['check_date'] == date and result['product__reference'] == stock_image['product__reference']:
+                                    y_quantity[-1] = result['sum']
+
+                            if y_quantity[-1] >= max_data['value']:
+                                max_data['value'] = y_quantity[-1]
+                                max_data['date'] = date
+
+                            if y_quantity[-1] <= min_data['value']:
+                                min_data['value'] = y_quantity[-1]
+                                min_data['date'] = date
+                    else:
+                        for date in range_futur_date:
+                            x_date.append(date)
+                            y_quantity.append(y_quantity[-1])
+                    # ----------------------------------------------past-----------------------------------------------------------------------------------
+                    x_past_date = []
+                    y_past_quantity = []
+                    x_past_date.append(stock_image['check_date'])
+                    y_past_quantity.append(stock_image['sum'])
+
+                    if (len(df) != 0 and len(results) != 0):
+                        df_past = df[(df.product__reference == stock_image['product__reference'])]
+
+                        for date in range_past_date[1::]:
+                            x_past_date.append(date)
+                            y_past_quantity.append(y_past_quantity[-1])
+
+                            newDf = df_past[(df_past.operation_date == date)]
+
+                            if (len(newDf) != 0):
+                                for index, row in newDf.iterrows():
+                                    y_past_quantity[-1] -= row['quantity']
+                            # Boucle for correction if you dont want correction comment the this bloc 
+                            for result in results:
+                                if result['check_date'] == date and result['product__reference'] == stock_image[
+                                    'product__reference']:
+                                    y_past_quantity[-1] = result['sum']
+
+                            if y_past_quantity[-1] >= max_data['value']:
+                                max_data['value'] = y_past_quantity[-1]
+                                max_data['date'] = date
+
+                            if y_past_quantity[-1] <= min_data['value']:
+                                min_data['value'] = y_past_quantity[-1]
+                                min_data['date'] = date
+                    else:
+                        for date in range_past_date[1::]:
+                            x_past_date.append(date)
+                            y_past_quantity.append(y_past_quantity[-1])
+                    # -------------------------------------------------------- Plot -------------------------------------------------------------
+                    x_total = []
+                    y_total = []
+                    x_total = x_past_date[::-1]
+                    x_total.extend(x_date[2::])
+                    y_total = y_past_quantity[::-1]
+                    y_total.extend(y_quantity[2::])
+
+                    if min_data['value']<=0:
+                        min_data['value'] = 0
+                    if max_data['value']<=0:
+                        max_data['value'] = 0
+
+                    all_y_data.extend(y_total)
+
+                    data.append(
+                        dict(
+                            type="scatter",
+                            mode="lines+markers",
+                            name=' Simulation de Stock' + stock_image['product__reference'],
+                            x=x_total,
+                            y=y_total,
+                            line=dict(shape="spline", smoothing="2"),
+                            marker=dict(symbol="diamond-open"),
+                        ),
+                    )
+        # ---------------------------------------------------------------------{end calcul stock}---------------------------------------------------------
+        # ---------------------------------------------------{Table}------------------------------------------------------
+            nbr_rupture = 0
+            nbr_risque_rupture = 0
+            nbr_bon_stock = 0
+            nbr_sur_stock = 0
+            rupture = 0
+
+            if value_risque_rupture != None and value_bon_stock != None:
+
+                risque_rupture = int(value_risque_rupture)
+                bon_stock = int(value_bon_stock)
+
+                for y in all_y_data:
+                    if y == rupture:
+                        nbr_rupture += 1
+                    elif y <= risque_rupture and y > rupture:
+                        nbr_risque_rupture += 1
+                    elif y <= bon_stock and y > risque_rupture:
+                        nbr_bon_stock += 1
+                    elif y > bon_stock:
+                        nbr_sur_stock += 1
+
+                ecart_type_data = statistics.pstdev(all_y_data)
+                mean_data = statistics.mean(all_y_data)
+
+                mean_data = np.around(float(mean_data), 2)
+
+                start_time = time.strptime(start_date, '%Y-%m-%d')
+                end_time = time.strptime(end_date, '%Y-%m-%d')
+                try:
+                    rows[0]['Rupture'] = min_data['value']
+                    rows[1]['Rupture'] = min_data['date'].date()
+                except:
+                    rows[0]['Rupture'] = 'NA'
+                try:
+                    rows[0]['Risque Rupture'] = max_data['value']
+                    rows[1]['Risque Rupture'] = max_data['date'].date()
+                except:
+                    rows[0]['Risque Rupture'] = 'NA'
+                try:
+                    rows[0]['Bon Stock'] = mean_data
+                    # rows[1]['Bon Stock'] = time.strftime('%d/%m/%Y ', end_time) + ' <--> ' + time.strftime('%d/%m/%Y ',start_time)
+                    rows[1]['Bon Stock'] = '---'
+
+                except:
+                    rows[0]['Bon Stock'] = 'NA'
+                try:
+                    rows[0]['Sur Stock'] = np.around(float(ecart_type_data), 2)
+                    # rows[1]['Sur Stock'] = time.strftime('%d/%m/%Y ', end_time) + ' <--> ' + time.strftime('%d/%m/%Y ',start_time)
+                    rows[1]['Sur Stock'] = '---'
+                except:
+                    rows[0]['Sur Stock'] = 'NA'
+                table_style = {'display': 'block'}
+
+                max_data = max(all_y_data)
+                min_data = min(all_y_data)
+                if min_data < 0:
+                    min_data = 0
+                if max_data < 0:
+                    max_data = 0
+
+                crit = np.array([1, 10, 2, 6, 1, 2, 2, 3, 1, 4, 6, 6, 9, 10, 5, 8, 3, 8,
+                                 5, 4, 9, 2, 8, 7, 1, 1, 7, 3, 9, 9, 6, 6, 8, 9, 6, 7, 5,
+                                 9, 8, 4, 4, 5, 6, 2, 9, 9, 4, 6, 9, 9])
+                color_dict = {
+                    'Rupture': 'rgb(255, 0, 0)',
+                    'Risque de Rupture': 'rgb(255, 153, 0)',
+                    'Bon Stock': 'rgb(0, 204, 102)',
+                    'Sur Stock': 'rgb(128, 0, 0)',
+                }
+
+                labels = np.unique(crit)  # or simply = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                values = np.bincount(crit)[1:]  # [5, 5, 3, 5, 4, 8, 3, 5, 10, 2]
+
+                labels = [
+                    'Rupture', 'Risque de Rupture', 'Bon Stock', 'Sur Stock'
+                ]
+                values = [
+                    nbr_rupture, nbr_risque_rupture, nbr_bon_stock, nbr_sur_stock
+                ]
+
+                colors = ['rgb(255, 0, 0)', 'rgb(255, 153, 0)', 'rgb(0, 255, 0)', 'rgb(153, 51, 51)']
+
+                fig = go.Figure(
+                    data=[
+                        go.Pie(
+                            labels=labels,
+                            values=values,
+                            pull=[0.1, 0.1, 0.1, 0.1]
+                        ),
+                    ]
+                )
+                fig.update_traces(
+                    hoverinfo='value+percent',
+                    textinfo='value+percent',
+                    hole=.4,
+                    marker=dict(colors=colors),
+
+                )
+                # fig.update_layout(legend = dict(font = dict(family = "Courier", size = 20, color = "black",)),
+                #   legend_title = dict(font = dict(family = "Courier", size = 20, color = "blue")))
+                fig.update_layout(
+                    xaxis_title="X Axis Title",
+                    yaxis_title="Y Axis Title",
+                    legend_title="Legend Title",
+                    autosize=True,
+                    width=600,
+                    height=600,
+                    font=dict(
+                        family="Courier New, monospace",
+                        size=16,
+                        color="black"
+                    )
+                )
+                # # fig = {
+                #     "data": [
+                #         {
+                #         "values": values,
+                #         "labels": labels,
+                #         'domain':{'x': [0, 1], 'y': [0, 1]},
+                #         "name": "Criticality",
+                #         "sort": False,
+                #         'pull' : [0.1, 0.1, 0.1, 0.1],
+                #         "marker": {'colors': ['rgb(255, 0, 0)', 'rgb(255, 153, 0)', 'rgb(0, 255, 0)','rgb(153, 51, 51)']},
+                #         "textinfo":"value+label",
+                #         "textfont": {'color': '#000000', 'size': 15},
+                #         "hole": .4,
+                #         "type": "pie",
+                #         'text-align': 'center',
+                #         'fontStyle': 'oblique',
+                #         'fontWeight': 'bold',
+                #         } 
+                #     ],
+                #     "layout": {
+                #         "title":"Criticalities",
+                #         "annotations": [
+                #             {
+                #                 "font": {
+                #                     "size": 1000,
+                #                     "color": '#5A5A5A'
+                #                 },
+                #                 "showarrow": False,
+                #                 'autosize':True,
+                #                 "text": "",
+                #                 'text-align': 'center',
+                #                 'fontStyle': 'oblique',
+                #                 'fontWeight': 'bold',
+                #             }
+                #         ]
+                #     }
+                # }
+
+        cats = _all_products.copy()
+        print(cats,'desrtoo1')
+        for cat in _all_products:
+            if cat['value'] in [selected_products]:
+                pass
+            else:
+                cats.remove(cat)
+                
+        print(cats,'desrtoo')
+        for cat in cats:
+            x = []
+            y = []
+            for target in results:
+                if (cat['value'] == target['product__id']):
+                    x.append(target['check_date'])
+                    y.append(target['sum'])
+                    
+            data.append(
+                dict(
+                    type="scatter",
+                    mode="lines+markers",
+                    name='Product: ' + cat['label'],
+                    x=x,
+                    y=y,
+                    line=dict(shape="spline", smoothing="2"),
+                    marker=dict(symbol="diamond-open"),
+                ),
+            )
+   
+   
+    # if (groupe_by == 'Product'):
+    #     data = []
+    
+    #     results = StockCheck.objects.filter(
+    #         Q(location__in=selected_locations) & Q(product__category__in=selected_categories) & Q(
+    #             product__in=[selected_products]) & Q(check_date__gte=start_date) & Q(check_date__lte=end_date)).values(
+    #         'product__reference','product__id','check_date').order_by('product__reference', 'check_date').annotate(sum=Sum('quantity'))
+
+    #     operations = Operation.objects.filter(
+    #         Q(product__in=[selected_products]) &
+    #         Q(status__in=selected_statuts) &
+    #         Q(location__in=selected_locations) &
+    #         Q(product__category__in=selected_categories) &
+    #         Q(operation_date__gte=start_date) &
+    #         Q(operation_date__lte=end_date)).values('product__reference', 'operation_date', 'quantity').order_by(
+    #         'product__reference','product__id','operation_date')
+
+    #     df = pd.DataFrame(list(operations))
+
+    #     df_results = pd.DataFrame(list(results.values()))
+
+    #     if n_clicks > 0 and dates:
+
+    #         stock_images = StockCheck.objects.filter(
+    #             Q(product__in=[selected_products]) & Q(status__in=selected_statuts) & Q(
+    #                 location__in=selected_locations) & Q(product__category__in=selected_categories) & Q(
+    #                 check_date__in=dates)).values('product__reference', 'product__id', 'check_date').order_by(
+    #             'product__reference', 'check_date').annotate(sum=Sum('quantity'))
+
+    #         all_y_data = []
+    #         if (len(stock_images) > 0):
+    #             for stock_image in stock_images:
+    #                 range_futur_date = []
+    #                 range_past_date = []
+    #                 range_futur_date = pd.date_range(stock_image['check_date'], end_date)
+    #                 range_past_date = pd.date_range(start_date, stock_image['check_date'])
+    #                 range_past_date = range_past_date.sort_values(ascending=False)
+
+    #                 x_date = []
+    #                 y_quantity = []
+
+    #                 max_data = {'value': stock_image['sum'], 'date': stock_image['check_date']}
+
+    #                 min_data = {'value': stock_image['sum'], 'date': stock_image['check_date']}
+
+    #                 x_date.append(stock_image['check_date'])
+
+    #                 y_quantity.append(stock_image['sum'])
+
+    #                 # ------------------------------------------------- future -------------------------------------------------------------------------
+
+    #                 if (len(df) != 0 and len(results) != 0):
+    #                     df_future = df[(df.product__reference == stock_image['product__reference'])]
+
+    #                     for date in range_futur_date:
+    #                         x_date.append(date)
+    #                         y_quantity.append(y_quantity[-1])
+    #                         newDf = df_future[(df_future.operation_date == date)]
+    #                         if (len(newDf) != 0):
+    #                             for index, row in newDf.iterrows():
+    #                                 y_quantity[-1] += row['quantity']
+    #                                 # Boucle for correction if you dont want correction comment the this bloc
+
+    #                         for result in results:
+    #                             if result['check_date'] == date and result['product__reference'] == stock_image['product__reference']:
+    #                                 y_quantity[-1] = result['sum']
+
+    #                         if y_quantity[-1] >= max_data['value']:
+    #                             max_data['value'] = y_quantity[-1]
+    #                             max_data['date'] = date
+
+    #                         if y_quantity[-1] <= min_data['value']:
+    #                             min_data['value'] = y_quantity[-1]
+    #                             min_data['date'] = date
+    #                 else:
+    #                     for date in range_futur_date:
+    #                         x_date.append(date)
+    #                         y_quantity.append(y_quantity[-1])
+    #                 # ----------------------------------------------past-----------------------------------------------------------------------------------
+    #                 x_past_date = []
+    #                 y_past_quantity = []
+    #                 x_past_date.append(stock_image['check_date'])
+    #                 y_past_quantity.append(stock_image['sum'])
+
+    #                 if (len(df) != 0 and len(results) != 0):
+    #                     df_past = df[(df.product__reference == stock_image['product__reference'])]
+
+    #                     for date in range_past_date[1::]:
+    #                         x_past_date.append(date)
+    #                         y_past_quantity.append(y_past_quantity[-1])
+
+    #                         newDf = df_past[(df_past.operation_date == date)]
+
+    #                         if (len(newDf) != 0):
+    #                             for index, row in newDf.iterrows():
+    #                                 y_past_quantity[-1] -= row['quantity']
+    #                         # Boucle for correction if you dont want correction comment the this bloc 
+    #                         for result in results:
+    #                             if result['check_date'] == date and result['product__reference'] == stock_image[
+    #                                 'product__reference']:
+    #                                 y_past_quantity[-1] = result['sum']
+
+    #                         if y_past_quantity[-1] >= max_data['value']:
+    #                             max_data['value'] = y_past_quantity[-1]
+    #                             max_data['date'] = date
+
+    #                         if y_past_quantity[-1] <= min_data['value']:
+    #                             min_data['value'] = y_past_quantity[-1]
+    #                             min_data['date'] = date
+    #                 else:
+    #                     for date in range_past_date[1::]:
+    #                         x_past_date.append(date)
+    #                         y_past_quantity.append(y_past_quantity[-1])
+    #                 # -------------------------------------------------------- Plot -------------------------------------------------------------
+    #                 x_total = []
+    #                 y_total = []
+    #                 x_total = x_past_date[::-1]
+    #                 x_total.extend(x_date[2::])
+    #                 y_total = y_past_quantity[::-1]
+    #                 y_total.extend(y_quantity[2::])
+
+    #                 if min_data['value']<=0:
+    #                     min_data['value'] = 0
+    #                 if max_data['value']<=0:
+    #                     max_data['value'] = 0
+
+    #                 all_y_data.extend(y_total)
+
+    #                 data.append(
+    #                     dict(
+    #                         type="scatter",
+    #                         mode="lines+markers",
+    #                         name=' Simulation de Stock' + stock_image['product__reference'],
+    #                         x=x_total,
+    #                         y=y_total,
+    #                         line=dict(shape="spline", smoothing="2"),
+    #                         marker=dict(symbol="diamond-open"),
+    #                     ),
+    #                 )
+    #     # ---------------------------------------------------------------------{end calcul stock}---------------------------------------------------------
+    #     # ---------------------------------------------------{Table}------------------------------------------------------
+    #         nbr_rupture = 0
+    #         nbr_risque_rupture = 0
+    #         nbr_bon_stock = 0
+    #         nbr_sur_stock = 0
+    #         rupture = 0
+
+    #         if value_risque_rupture != None and value_bon_stock != None:
+
+    #             risque_rupture = int(value_risque_rupture)
+    #             bon_stock = int(value_bon_stock)
+
+    #             for y in all_y_data:
+    #                 if y == rupture:
+    #                     nbr_rupture += 1
+    #                 elif y <= risque_rupture and y > rupture:
+    #                     nbr_risque_rupture += 1
+    #                 elif y <= bon_stock and y > risque_rupture:
+    #                     nbr_bon_stock += 1
+    #                 elif y > bon_stock:
+    #                     nbr_sur_stock += 1
+
+    #             ecart_type_data = statistics.pstdev(all_y_data)
+    #             mean_data = statistics.mean(all_y_data)
+
+    #             mean_data = np.around(float(mean_data), 2)
+
+    #             start_time = time.strptime(start_date, '%Y-%m-%d')
+    #             end_time = time.strptime(end_date, '%Y-%m-%d')
+    #             try:
+    #                 rows[0]['Rupture'] = min_data['value']
+    #                 rows[1]['Rupture'] = min_data['date'].date()
+    #             except:
+    #                 rows[0]['Rupture'] = 'NA'
+    #             try:
+    #                 rows[0]['Risque Rupture'] = max_data['value']
+    #                 rows[1]['Risque Rupture'] = max_data['date'].date()
+    #             except:
+    #                 rows[0]['Risque Rupture'] = 'NA'
+    #             try:
+    #                 rows[0]['Bon Stock'] = mean_data
+    #                 # rows[1]['Bon Stock'] = time.strftime('%d/%m/%Y ', end_time) + ' <--> ' + time.strftime('%d/%m/%Y ',start_time)
+    #                 rows[1]['Bon Stock'] = '---'
+
+    #             except:
+    #                 rows[0]['Bon Stock'] = 'NA'
+    #             try:
+    #                 rows[0]['Sur Stock'] = np.around(float(ecart_type_data), 2)
+    #                 # rows[1]['Sur Stock'] = time.strftime('%d/%m/%Y ', end_time) + ' <--> ' + time.strftime('%d/%m/%Y ',start_time)
+    #                 rows[1]['Sur Stock'] = '---'
+    #             except:
+    #                 rows[0]['Sur Stock'] = 'NA'
+    #             table_style = {'display': 'block'}
+
+    #             max_data = max(all_y_data)
+    #             min_data = min(all_y_data)
+    #             if min_data < 0:
+    #                 min_data = 0
+    #             if max_data < 0:
+    #                 max_data = 0
+
+    #             crit = np.array([1, 10, 2, 6, 1, 2, 2, 3, 1, 4, 6, 6, 9, 10, 5, 8, 3, 8,
+    #                              5, 4, 9, 2, 8, 7, 1, 1, 7, 3, 9, 9, 6, 6, 8, 9, 6, 7, 5,
+    #                              9, 8, 4, 4, 5, 6, 2, 9, 9, 4, 6, 9, 9])
+    #             color_dict = {
+    #                 'Rupture': 'rgb(255, 0, 0)',
+    #                 'Risque de Rupture': 'rgb(255, 153, 0)',
+    #                 'Bon Stock': 'rgb(0, 204, 102)',
+    #                 'Sur Stock': 'rgb(128, 0, 0)',
+    #             }
+
+    #             labels = np.unique(crit)  # or simply = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    #             values = np.bincount(crit)[1:]  # [5, 5, 3, 5, 4, 8, 3, 5, 10, 2]
+
+    #             labels = [
+    #                 'Rupture', 'Risque de Rupture', 'Bon Stock', 'Sur Stock'
+    #             ]
+    #             values = [
+    #                 nbr_rupture, nbr_risque_rupture, nbr_bon_stock, nbr_sur_stock
+    #             ]
+
+    #             colors = ['rgb(255, 0, 0)', 'rgb(255, 153, 0)', 'rgb(0, 255, 0)', 'rgb(153, 51, 51)']
+
+    #             fig = go.Figure(
+    #                 data=[
+    #                     go.Pie(
+    #                         labels=labels,
+    #                         values=values,
+    #                         pull=[0.1, 0.1, 0.1, 0.1]
+    #                     ),
+    #                 ]
+    #             )
+    #             fig.update_traces(
+    #                 hoverinfo='value+percent',
+    #                 textinfo='value+percent',
+    #                 hole=.4,
+    #                 marker=dict(colors=colors),
+
+    #             )
+    #             # fig.update_layout(legend = dict(font = dict(family = "Courier", size = 20, color = "black",)),
+    #             #   legend_title = dict(font = dict(family = "Courier", size = 20, color = "blue")))
+    #             fig.update_layout(
+    #                 xaxis_title="X Axis Title",
+    #                 yaxis_title="Y Axis Title",
+    #                 legend_title="Legend Title",
+    #                 autosize=True,
+    #                 width=600,
+    #                 height=600,
+    #                 font=dict(
+    #                     family="Courier New, monospace",
+    #                     size=16,
+    #                     color="black"
+    #                 )
+    #             )
+    #             # # fig = {
+    #             #     "data": [
+    #             #         {
+    #             #         "values": values,
+    #             #         "labels": labels,
+    #             #         'domain':{'x': [0, 1], 'y': [0, 1]},
+    #             #         "name": "Criticality",
+    #             #         "sort": False,
+    #             #         'pull' : [0.1, 0.1, 0.1, 0.1],
+    #             #         "marker": {'colors': ['rgb(255, 0, 0)', 'rgb(255, 153, 0)', 'rgb(0, 255, 0)','rgb(153, 51, 51)']},
+    #             #         "textinfo":"value+label",
+    #             #         "textfont": {'color': '#000000', 'size': 15},
+    #             #         "hole": .4,
+    #             #         "type": "pie",
+    #             #         'text-align': 'center',
+    #             #         'fontStyle': 'oblique',
+    #             #         'fontWeight': 'bold',
+    #             #         } 
+    #             #     ],
+    #             #     "layout": {
+    #             #         "title":"Criticalities",
+    #             #         "annotations": [
+    #             #             {
+    #             #                 "font": {
+    #             #                     "size": 1000,
+    #             #                     "color": '#5A5A5A'
+    #             #                 },
+    #             #                 "showarrow": False,
+    #             #                 'autosize':True,
+    #             #                 "text": "",
+    #             #                 'text-align': 'center',
+    #             #                 'fontStyle': 'oblique',
+    #             #                 'fontWeight': 'bold',
+    #             #             }
+    #             #         ]
+    #             #     }
+    #             # }
+
+    #     cats = _all_products.copy()
+    #     print(cats,'desrtoo1')
+    #     for cat in _all_products:
+    #         if cat['value'] in [selected_products]:
+    #             pass
+    #         else:
+    #             cats.remove(cat)
+                
+    #     print(cats,'desrtoo')
+    #     for cat in cats:
+    #         x = []
+    #         y = []
+    #         for target in results:
+    #             if (cat['value'] == target['product__id']):
+    #                 x.append(target['check_date'])
+    #                 y.append(target['sum'])
+                    
+    #         data.append(
+    #             dict(
+    #                 type="scatter",
+    #                 mode="lines+markers",
+    #                 name='Product: ' + cat['label'],
+    #                 x=x,
+    #                 y=y,
+    #                 line=dict(shape="spline", smoothing="2"),
+    #                 marker=dict(symbol="diamond-open"),
+    #             ),
+    #         )
+   
    
     elif (groupe_by == 'Categorie'):
 
@@ -969,15 +1672,17 @@ def make_aggregate_figure(selected_products, selected_statuts, selected_location
                     rows[0]['Risque Rupture'] = 'NA'
                 try:
                     rows[0]['Bon Stock'] = mean_data
-                    rows[1]['Bon Stock'] = time.strftime('%d/%m/%Y ', end_time) + ' <--> ' + time.strftime('%d/%m/%Y ',
-                                                                                                           start_time)
+                    # rows[1]['Bon Stock'] = time.strftime('%d/%m/%Y ', end_time) + ' <--> ' + time.strftime('%d/%m/%Y ',start_time)
+                    rows[1]['Bon Stock'] = '---'
 
                 except:
                     rows[0]['Bon Stock'] = 'NA'
                 try:
                     rows[0]['Sur Stock'] = np.around(float(ecart_type_data), 2)
-                    rows[1]['Sur Stock'] = time.strftime('%d/%m/%Y ', end_time) + ' <--> ' + time.strftime('%d/%m/%Y ',
-                                                                                                           start_time)
+                    # rows[1]['Sur Stock'] = time.strftime('%d/%m/%Y ', end_time) + ' <--> ' + time.strftime('%d/%m/%Y ',start_time)
+                    rows[1]['Sur Stock'] = '---'
+
+                                                                        
                 except:
                     rows[0]['Sur Stock'] = 'NA'
                 table_style = {'display': 'block'}
@@ -1412,15 +2117,15 @@ def make_aggregate_figure(selected_products, selected_statuts, selected_location
                     rows[0]['Risque Rupture'] = 'NA'
                 try:
                     rows[0]['Bon Stock'] = mean_data
-                    rows[1]['Bon Stock'] = time.strftime('%d/%m/%Y ', end_time) + ' <--> ' + time.strftime('%d/%m/%Y ',
-                                                                                                           start_time)
+                    # rows[1]['Bon Stock'] = time.strftime('%d/%m/%Y ', end_time) + ' <--> ' + time.strftime('%d/%m/%Y ',start_time)
+                    rows[1]['Bon Stock'] = '---'
 
                 except:
                     rows[0]['Bon Stock'] = 'NA'
                 try:
                     rows[0]['Sur Stock'] = np.around(float(ecart_type_data), 2)
-                    rows[1]['Sur Stock'] = time.strftime('%d/%m/%Y ', end_time) + ' <--> ' + time.strftime('%d/%m/%Y ',
-                                                                                                           start_time)
+                    # rows[1]['Sur Stock'] = time.strftime('%d/%m/%Y ', end_time) + ' <--> ' + time.strftime('%d/%m/%Y ',start_time)
+                    rows[1]['Sur Stock'] = '---'
                 except:
                     rows[0]['Sur Stock'] = 'NA'
                 table_style = {'display': 'block'}
@@ -1699,6 +2404,7 @@ def make_aggregate_figure(selected_products, selected_statuts, selected_location
                 try:
                     rows[0]['Risque Rupture'] = nbr_risque_rupture
                 except:
+                    
                     rows[0]['Risque Rupture'] = 'NA'
                 try:
                     rows[0]['Bon Stock'] = nbr_bon_stock
@@ -1739,10 +2445,13 @@ def make_aggregate_figure(selected_products, selected_statuts, selected_location
                         )
     layout_aggregate["title"] = "Stock-Image"
 
-    return [{
+    figure={
         'data': data,
         'layout': layout_aggregate
-    }, rows, table_style, fig]
+    }
+
+
+    return [figure, rows, table_style, fig]
 
 
 # @app.callback(
