@@ -10,14 +10,14 @@ import plotly.graph_objs as go
 from common.dashboards import dash_utils
 from dash.dependencies import Input, Output
 from django.db import connection
-from django.db.models import Case, CharField, DateTimeField,ExpressionWrapper, F, IntegerField, Sum, Value,When
+from django.db.models import Case, CharField, DateTimeField, ExpressionWrapper, F, IntegerField, Sum, Value, When
 from django.utils.translation import gettext as _
 from django_pandas.io import read_frame
 from django_plotly_dash import DjangoDash
 from plotly.subplots import make_subplots
-from stock.models import Product,ProductCategory
-from purchase.models import OrderDetail,ReceiptDetail
-from .app import app  
+from stock.models import Product, ProductCategory
+from purchase.models import OrderDetail, ReceiptDetail
+from .app import app
 from datetime import datetime
 import plotly.express as px
 from .ids import *
@@ -25,7 +25,8 @@ from .ids import *
 
 _df_empty = pd.DataFrame(columns=[])
 
-nameSwap = {'not_delivered': 'Not Delivered','Partially Delivered In Time': 'hello!','Partially Delivered Not In Time': 'hello!','Delivered In Time':'hi!','Delivered Not In Time':'hi!'}
+nameSwap = {'not_delivered': 'Not Delivered', 'Partially Delivered In Time': 'hello!',
+            'Partially Delivered Not In Time': 'hello!', 'Delivered In Time': 'hi!', 'Delivered Not In Time': 'hi!'}
 
 
 FULINTIME = 'Full In Time'
@@ -33,67 +34,67 @@ FULNOTINTIME = 'Full Not In Time'
 NOTDELIVERED = 'Not Delivered '
 
 
+def calcule(x, df_recipe_detail_filtred, df_order_detail_filtred):
 
-def calcule(x,df_recipe_detail_filtred,df_order_detail_filtred):
-    
-    var = df_recipe_detail_filtred[(df_recipe_detail_filtred['order']==x['order'])&(df_recipe_detail_filtred['product']==x['product'])&(df_recipe_detail_filtred['no_cumulative']>=x['no_cumulative'])].sort_values(['no_cumulative'],ascending=True).head(1)['receipt_at']
-    
+    var = df_recipe_detail_filtred[(df_recipe_detail_filtred['order'] == x['order']) & (df_recipe_detail_filtred['product'] == x['product']) & (
+        df_recipe_detail_filtred['no_cumulative'] >= x['no_cumulative'])].sort_values(['no_cumulative'], ascending=True).head(1)['receipt_at']
+
     max_reciption = 0
     max_ordred = 0
-    max_by_order_product_order = df_order_detail_filtred[(df_order_detail_filtred['order']==x['order'])&(df_order_detail_filtred['product']==x['product'])].sort_values(['no_cumulative'],ascending=False).head(1)['no_cumulative']
-    max_by_order_product_reciption = df_recipe_detail_filtred[(df_recipe_detail_filtred['order']==x['order'])&(df_recipe_detail_filtred['product']==x['product'])].sort_values(['no_cumulative'],ascending=False).head(1)['no_cumulative']
-    if len(max_by_order_product_reciption)!=0:
+    max_by_order_product_order = df_order_detail_filtred[(df_order_detail_filtred['order'] == x['order']) & (
+        df_order_detail_filtred['product'] == x['product'])].sort_values(['no_cumulative'], ascending=False).head(1)['no_cumulative']
+    max_by_order_product_reciption = df_recipe_detail_filtred[(df_recipe_detail_filtred['order'] == x['order']) & (
+        df_recipe_detail_filtred['product'] == x['product'])].sort_values(['no_cumulative'], ascending=False).head(1)['no_cumulative']
+    if len(max_by_order_product_reciption) != 0:
         max_reciption = max_by_order_product_reciption.iloc[0]
-        
-    if len(max_by_order_product_order)!=0:
+
+    if len(max_by_order_product_order) != 0:
         max_ordred = max_by_order_product_order.iloc[0]
-        
+
     x['rest_totle'] = max_reciption-max_ordred
-    
-        
-    if x['no_cumulative']<=max_reciption:
+
+    if x['no_cumulative'] <= max_reciption:
         x['rest'] = 0
-    else :
+    else:
         x['rest'] = max_reciption - x['no_cumulative']
-         
-         
-    if x['no_cumulative']<=max_reciption:
+
+    if x['no_cumulative'] <= max_reciption:
         x['rest_no_all'] = 0
-        
-    else :
-        
-        if abs(max_reciption - x['no_cumulative'])>x['ordered_quantity'] :
-            
+
+    else:
+
+        if abs(max_reciption - x['no_cumulative']) > x['ordered_quantity']:
+
             x['rest_no_all'] = - x['ordered_quantity']
-            
-        elif max_reciption==0:
+
+        elif max_reciption == 0:
             x['rest_no_all'] = - x['ordered_quantity']
-            
-        else :
+
+        else:
             x['rest_no_all'] = max_reciption - x['no_cumulative']
-            
-    if len(var)!=0:
+
+    if len(var) != 0:
         x['date_full'] = var.iloc[0]
 
-    else :
-        x['date_full'] =  None
-    if  x['desired_at']!=None and x['date_full']!=None:
-        
+    else:
+        x['date_full'] = None
+    if x['desired_at'] != None and x['date_full'] != None:
+
         delta = x['desired_at'] - x['date_full']
         delta = delta.days
-         
-    else :
+
+    else:
         delta = None
-        
-    if delta!=None:
-        
-        if delta>=0:
+
+    if delta != None:
+
+        if delta >= 0:
             x['status'] = FULINTIME
-        else :
+        else:
             x['status'] = FULNOTINTIME
-    else :
+    else:
         x['status'] = NOTDELIVERED
-        
+
     x['diff_days'] = delta
     return x
 
@@ -106,11 +107,13 @@ _figure_empty = _df_empty.iplot(
     y=None,
     theme='white',
 )
+
+
 @app.callback(
     [
         Output(FIGURE_ORDERSDETAILS_BY_CUSTOMER_ID, "figure"),
         Output(FIGURE_ORDERSDETAILS_ID, "figure"),
-    ],   
+    ],
     [
         Input(DROPDOWN_PRODUCT_LIST_ID, "value"),
         Input(DROPDOWN_WAREHOUSE_LIST_ID, "value"),
@@ -120,7 +123,7 @@ _figure_empty = _df_empty.iplot(
         Input(INPUT_DATE_RANGE_ID, 'end_date'),
     ]
 )
-def plot_OrderDetails_by_date_figure(selected_products,selected_warehouses,selected_categories,selected_suppliers,start_date,end_date):
+def plot_OrderDetails_by_date_figure(selected_products, selected_warehouses, selected_categories, selected_suppliers, start_date, end_date):
     """[function that return figure that give status of all orderDetails that made by the filtered customer ]
 
     Args:
@@ -156,28 +159,31 @@ def plot_OrderDetails_by_date_figure(selected_products,selected_warehouses,selec
 
     df_order_detail_filtred = read_frame(qs_order_detail_filtred)
 
+    df_order_detail_filtred['no_cumulative'] = df_order_detail_filtred.sort_values(
+        ['desired_at'], ascending=True).groupby(['order', 'product'])['ordered_quantity'].cumsum()
 
-    df_order_detail_filtred['no_cumulative'] = df_order_detail_filtred.sort_values(['desired_at'],ascending=True).groupby(['order','product'])['ordered_quantity'].cumsum()
+    df_recipe_detail_filtred['no_cumulative'] = df_recipe_detail_filtred.sort_values(
+        ['receipt_at'], ascending=True).groupby(['order', 'receipt', 'product'])['receipted_quantity'].cumsum()
+    df_recipe_detail_filtred = df_recipe_detail_filtred.sort_values(
+        ['receipt_at'], ascending=False)
 
-    df_recipe_detail_filtred['no_cumulative'] = df_recipe_detail_filtred.sort_values(['receipt_at'],ascending=True).groupby(['order','receipt','product'])['receipted_quantity'].cumsum()
-    df_recipe_detail_filtred = df_recipe_detail_filtred.sort_values(['receipt_at'],ascending=False)
+    df_order_detail_filtred = df_order_detail_filtred.apply(lambda x: calcule(
+        x, df_recipe_detail_filtred, df_order_detail_filtred), axis=1)
 
-    df_order_detail_filtred = df_order_detail_filtred.apply(lambda x : calcule(x,df_recipe_detail_filtred,df_order_detail_filtred),axis = 1) 
+    df = df_order_detail_filtred.groupby(
+        ['order', 'product']).first().reset_index()
 
+    figure_pie_order = make_subplots(
+        rows=1, cols=1, specs=[[{'type': 'domain'}]])
 
-    df = df_order_detail_filtred.groupby(['order','product']).first().reset_index()
+    if df_order_detail_filtred.size != 0:
 
-    
-    figure_pie_order = make_subplots(rows=1, cols=1, specs=[[{'type': 'domain'}]])
-    
-    if df_order_detail_filtred.size!=0 :
+        df_order_detail_filtred = df_order_detail_filtred[df_order_detail_filtred['diff_days'].notnull(
+        )]
+        df_order_detail_filtred = df_order_detail_filtred.reset_index(
+            drop=True)
+        df_order_detail_filtred.index = df_order_detail_filtred.index + 1
 
-
-        df_order_detail_filtred = df_order_detail_filtred[df_order_detail_filtred['diff_days'].notnull() ]
-        df_order_detail_filtred = df_order_detail_filtred.reset_index(drop=True)
-        df_order_detail_filtred.index =df_order_detail_filtred.index + 1
-
-    
         tseries = df_order_detail_filtred['diff_days']
         color = (tseries > 0).apply(lambda x: 'g' if x else 'r')
         print(df_order_detail_filtred)
@@ -193,31 +199,33 @@ def plot_OrderDetails_by_date_figure(selected_products,selected_warehouses,selec
         )
 
         figure.add_trace(go.Scatter(
-                x=[df_order_detail_filtred[df_order_detail_filtred['diff_days']==df_order_detail_filtred['diff_days'].min()].index.tolist()[0]],
-                y=[df_order_detail_filtred['diff_days'].min()],
-                mode="markers",
-                showlegend=False,
-                marker=dict(color="yellow",size=10)
-            )
+            x=[df_order_detail_filtred[df_order_detail_filtred['diff_days'] ==
+                                       df_order_detail_filtred['diff_days'].min()].index.tolist()[0]],
+            y=[df_order_detail_filtred['diff_days'].min()],
+            mode="markers",
+            showlegend=False,
+            marker=dict(color="yellow", size=10)
+        )
         )
         figure.add_trace(go.Scatter(
-                x=[df_order_detail_filtred[df_order_detail_filtred['diff_days']==df_order_detail_filtred['diff_days'].max()].index.tolist()[0]],
-                y=[df_order_detail_filtred['diff_days'].max()],
-                mode="markers",
-                showlegend=False,
-                marker=dict(color="lightgreen",size=10)
-            )
+            x=[df_order_detail_filtred[df_order_detail_filtred['diff_days'] ==
+                                       df_order_detail_filtred['diff_days'].max()].index.tolist()[0]],
+            y=[df_order_detail_filtred['diff_days'].max()],
+            mode="markers",
+            showlegend=False,
+            marker=dict(color="lightgreen", size=10)
+        )
         )
 
         figure.add_trace(go.Scatter(
-                x=[-1,max(df_order_detail_filtred.index.tolist())+1],
-                y=[df_order_detail_filtred['diff_days'].mean(),df_order_detail_filtred['diff_days'].mean()],
-                mode="lines",
-                showlegend=False,
-                line = dict(color='firebrick', width=4, dash='dot')
-            )
+            x=[-1, max(df_order_detail_filtred.index.tolist())+1],
+            y=[df_order_detail_filtred['diff_days'].mean(
+            ), df_order_detail_filtred['diff_days'].mean()],
+            mode="lines",
+            showlegend=False,
+            line=dict(color='firebrick', width=4, dash='dot')
         )
-
+        )
 
         figure_order = df.iplot(
             asFigure=True,
@@ -225,7 +233,7 @@ def plot_OrderDetails_by_date_figure(selected_products,selected_warehouses,selec
             barmode='group',
             x=['desired_at'],
             y=['rest_totle'],
-            colors= [
+            colors=[
                 'rgb(255, 0, 0)',
                 'rgb(0, 255, 0)',
                 'rgb(255, 230, 0)',
@@ -244,7 +252,7 @@ def plot_OrderDetails_by_date_figure(selected_products,selected_warehouses,selec
             barmode='group',
             x=['desired_at'],
             y=['rest_no_all'],
-            colors= [
+            colors=[
                 'rgb(255, 0, 0)',
                 'rgb(0, 255, 0)',
                 'rgb(255, 230, 0)',
@@ -270,20 +278,20 @@ def plot_OrderDetails_by_date_figure(selected_products,selected_warehouses,selec
                         'rgb(255, 132, 0)',
                     ]
                 },
-            )
-        , 1, 1)
-        
-    else :
-        
+            ), 1, 1)
+
+    else:
+
         figure = _figure_empty
-    figure_pie_order.update_traces(hole=.4, hoverinfo="label+percent+name+value") 
+    figure_pie_order.update_traces(
+        hole=.4, hoverinfo="label+percent+name+value")
     figure.update_layout(
         autosize=True,
         yaxis=dict(
             tickmode="array",
         )
     )
-    return figure,figure_pie_order
+    return figure, figure_pie_order
 
 
 dash_utils.select_all_callbacks(
