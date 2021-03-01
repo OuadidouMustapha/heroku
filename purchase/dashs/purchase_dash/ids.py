@@ -45,3 +45,11 @@ SUBTITLE_OTIF_ID = dash_utils.generate_html_id(_prefix, 'SUBTITLE_OTIF_ID' )
 INPUT_DATE_RANGE_ID = dash_utils.generate_html_id(_prefix, 'INPUT_DATE_RANGE_ID')
 
 DETAILS_PRODUCT_LIST_ID = dash_utils.generate_html_id(_prefix, 'DETAILS_PRODUCT_LIST_ID')
+
+INPUT_ACCEPTABLE_VALUE = dash_utils.generate_html_id(_prefix, 'INPUT_ACCEPTABLE_VALUE')
+
+INPUT_RISQUE_VALUE = dash_utils.generate_html_id(_prefix, 'INPUT_RISQUE_VALUE')
+
+SUBMIT_VALUES = dash_utils.generate_html_id(_prefix, 'SUBMIT_VALUES')
+
+
