@@ -84,12 +84,17 @@
                     </div>
                     <!-- /.container-fluid -->
 
+                    <!-- Footer -->
+
+                    {% include 'partials/_footer.html' %}
+                     <!-- End of Footer -->
+
                 </div>
                 <!-- End of Main Content -->
 
-                <!-- Footer -->
-                {% include 'partials/_footer.html' %}
-                <!-- End of Footer -->
+                
+                
+               
 
             </div>
             <!-- End of Content Wrapper -->
@@ -123,7 +128,6 @@
     </script>
     {% register_notify_callbacks callbacks='fill_notification_badge,my_special_notification_callback' menu_class='notify-dropdown-menu' refresh_period=300 %}
     
-
     <!-- Page level plugins -->
     {% comment %} <script src="{% static 'common/base/vendor/chart.js/Chart.min.js' %}"></script> {% endcomment %}
 

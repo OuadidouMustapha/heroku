@@ -42,6 +42,12 @@ pystan = "*"
 fbprophet = "*"
 hijri-converter = "*"
 factory-boy = "*"
+djangorestframework = "*"
+django-restql = "*"
+drf-dynamic-fields = "*"
+djangorestframework-queryfields = "*"
+faker = "*"
+django-on-heroku = "*"
 
 [requires]
 python_version = "3.7"
