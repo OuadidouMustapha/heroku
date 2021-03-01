@@ -27,7 +27,7 @@ class Location(CommonMeta):
     reference = models.CharField(unique=True, max_length=20, null=False)
     name = models.CharField(max_length=200, blank=True, null=True)
     description = models.TextField(blank=True)
-
+    warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE, blank=True, null=True)
     objects = managers.LocationQuerySet.as_manager()
 
     def __str__(self):
@@ -42,7 +42,7 @@ class Operation(CommonMeta):
         (Q, 'Q'),
         (R, 'R'),
     )
-    product = models.ForeignKey('stock.Product', on_delete=models.CASCADE, blank=True, null=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, blank=True, null=True)
     location = models.ForeignKey(Location, on_delete=models.CASCADE, blank=True, null=True)
     reference = models.CharField(unique=False, max_length=20, null=True)
     operation_date = models.DateField(blank=True, null=True)

@@ -83,11 +83,7 @@ class OrderFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ('reference',)
 
 class ReceiptFactory(factory.django.DjangoModelFactory):
-    receipt_at = factory.Faker(
-        'past_datetime',
-        start_date='-2y',
-        tzinfo=pytz.utc
-    )
+
     class Meta:
         model = Receipt
 
@@ -137,11 +133,6 @@ class OrderDetailFactory(factory.django.DjangoModelFactory):
         max_value=500
     )
 
-    desired_at = factory.Faker(
-        'past_datetime',
-        start_date='-2y',
-        tzinfo=pytz.utc
-    )
 
     class Meta:
         model = OrderDetail
@@ -150,28 +141,30 @@ class OrderDetailFactory(factory.django.DjangoModelFactory):
 
     @factory.post_generation
     def create_orderdetail(self, create, how_many, **kwargs):
-        at_least = 1 # TODO : use a global constant or console parameter
-
+        at_least = 1 
+        fake = Faker()
+        random_date_this_year = fake.date_time_between(start_date='-2m', end_date='+2m')
         
         self.order = random.choice(orders)
         self.warehouse = random.choice(warehouses)
         self.product = random.choice(products)
+        self.desired_at = random_date_this_year
 
-        if not create:
-            return
+
+        # if not create:
+        #     return
        
         for n in range(how_many or at_least):
             # Generate random date
 
             # Generate warehouses
-            
-            fake = Faker()
-            random_date_this_year = fake.date_this_year()
+            random_date_this_year = Faker().date_time_between(start_date='-1y', end_date='+1y')
 
             ReceiptDetailFactory(
                 product=self.product,
                 order=self.order,
                 order_detail=self,
+                receipt_at = random_date_this_year,
                 receipt = random.choice(receipts),
                 warehouse = random.choice(warehouses),
                 status = random.choice(status),

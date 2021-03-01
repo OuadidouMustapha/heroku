@@ -14,7 +14,7 @@ import cufflinks as cf
 
 import numpy as np
 from plotly.subplots import make_subplots
-from django.db.models import F, ExpressionWrapper, DateTimeField,IntegerField,Case, CharField, Value, When,Sum,Max,Count
+from django.db.models import F, ExpressionWrapper, DateTimeField,IntegerField,Case, CharField, Value, When,Sum,Max,Count,DecimalField
 
 from multiprocessing import  Pool
 import multiprocessing as mp
@@ -60,12 +60,15 @@ layout = dict(
     ),
 )
 
+TYPE_QUANTITY = 'Quantity'
+TYPE_PRICE = 'Price'
+
 # TODO Avoid to repet query sets  in all callbacks
 
 
 # ------------------------------------------{Id Graph}--------------------------------------------------------
 
-figure_customer_id = dash_utils.generate_html_id(_prefix, 'figure_customer_id')
+figure_cat_id = dash_utils.generate_html_id(_prefix, 'figure_cat_id')
 figure_abc_id = dash_utils.generate_html_id(_prefix, 'figure_orderDetails_id')
 figure_fmr_id = dash_utils.generate_html_id(_prefix, 'figure_fmr_id')
 figure_most_ordred_product_id = dash_utils.generate_html_id(_prefix, 'figure_most_ordred_product_id')
@@ -92,6 +95,7 @@ dropdown_order_list_id = dash_utils.generate_html_id(_prefix, 'dropdown_order_li
 dropdown_fmr_list_id = dash_utils.generate_html_id(_prefix, 'dropdown_fmr_list_id')
 dropdown_warehouse_list_id = dash_utils.generate_html_id(_prefix, 'dropdown_warehouse_list_id')
 dropdown_abc_list_id = dash_utils.generate_html_id(_prefix, 'dropdown_abc_list_id')
+dropdown_type_list_id = dash_utils.generate_html_id(_prefix, 'dropdown_type_list_id')
 
 # --------------------------------------------Div list -------------------------------------------
 
@@ -171,7 +175,19 @@ def filter_container():
                 html.Div(id="number-out"),
             ], sm=12, md=6, lg=3),
         ]),
-
+        dbc.Row([
+            dbc.Col([
+                dbc.Label(_('Show By')),
+                dcc.Dropdown(
+                    id=dropdown_type_list_id,
+                    options=[
+                        {'label': _('Quantity'), 'value': TYPE_QUANTITY},
+                        {'label': _('Price'), 'value': TYPE_PRICE},
+                    ],
+                    value='Quantity',
+                ),
+            ], sm=12, md=3, lg=3),
+        ]),
         html.Details([
             html.Summary(_('Products')),
             dbc.Col([
@@ -369,7 +385,7 @@ def body_container():
                                                 value='what-is',
                                                 children=dcc.Loading(
                                                     html.Div(
-                                                        [dcc.Graph(id=figure_customer_id)],
+                                                        [dcc.Graph(id=figure_cat_id)],
                                                         className="",
                                                     )
                                                 ),
@@ -410,18 +426,15 @@ def body_container():
                                                     ]
                                                 )
                                             ),
-                                        ])
+                                        ]
+                                    )
                                 ],
                             ),
                         ],
                         className="shadow-lg p-12 mb-5 bg-white rounded",
                     ),
                 ], sm=12, md=6, lg=6),
-            ]),
-            
-
-
-
+            ]),            
         ],
         id="mainContainer",
         style={"display": "flex", "flex-direction": "column"},
@@ -470,10 +483,11 @@ app.layout = dash_utils.get_dash_layout(filter_container(),body_container())
         Input(dropdown_warehouse_list_id, "value"),
         Input(dropdown_abc_list_id, "value"),
         Input(dropdown_fmr_list_id, "value"),
+        Input(dropdown_type_list_id,"value"),
     ]
 )
 def plot_pie_statuts_product_figure(selected_products, selected_categories, selected_warehouses, selected_abc,
-                                    selected_fmr):
+                                    selected_fmr,show_by):
     
     stockChecks = StockCheck.objects.filter(
         product__in=selected_products,
@@ -485,45 +499,83 @@ def plot_pie_statuts_product_figure(selected_products, selected_categories, sele
     
     
     stockChecks = stockChecks.order_by('product__id', 'warehouse__id', '-check_date','product__category').distinct('product__id', 'warehouse__id')
-    stockChecks_cat = stockChecks.values('product__category__reference','quantity')
-    stockChecks_abc = stockChecks.values('product__abc_segmentation','quantity')
-    stockChecks_fmr = stockChecks.values('product__fmr_segmentation','quantity')
-    stockChecks_warehouse = stockChecks.values('warehouse','quantity')
+
+    if show_by==TYPE_PRICE:
+        stockChecks_cat = stockChecks.values('product__category__reference','product__unit_price','quantity')
+        
+        stockChecks_cat = stockChecks_cat.annotate(
+            price_of_quantity=
+                Case(
+                    When(quantity=None, then=0),
+                    When(product__unit_price=None, then=None),
+                    default=F('quantity')*F('product__unit_price'),
+                    output_field=DecimalField()
+                ),
+        )
+        stockChecks_abc = stockChecks.values('product__abc_segmentation','product__unit_price','quantity')
+        stockChecks_abc = stockChecks_abc.annotate(
+            price_of_quantity=
+                Case(
+                    When(quantity=None, then=0),
+                    When(product__unit_price=None, then=None),
+                    default=F('quantity')*F('product__unit_price'),
+                    output_field=DecimalField()
+                ),
+        )
+        stockChecks_fmr = stockChecks.values('product__fmr_segmentation','product__unit_price','quantity')
+        stockChecks_fmr = stockChecks_fmr.annotate(
+            price_of_quantity=
+                Case(
+                    When(quantity=None, then=0),
+                    When(product__unit_price=None, then=None),
+                    default=F('quantity')*F('product__unit_price'),
+                    output_field=DecimalField()
+                ),
+        )
+        stockChecks_warehouse = stockChecks.values('warehouse','product__unit_price','quantity')
+        stockChecks_warehouse = stockChecks_warehouse.annotate(
+            price_of_quantity=
+                Case(
+                    When(quantity=None, then=0),
+                    When(product__unit_price=None, then=None),
+                    default=F('quantity')*F('product__unit_price'),
+                    output_field=DecimalField()
+                ),
+        )
+
+        df_data_cat = read_frame(stockChecks_cat)
+        df_data_abc = read_frame(stockChecks_abc)
+        df_data_fmr = read_frame(stockChecks_fmr)
+        df_data_whahouse = read_frame(stockChecks_warehouse)
     
-    df_data_cat = read_frame(stockChecks_cat)
-    df_data_abc = read_frame(stockChecks_abc)
-    df_data_fmr = read_frame(stockChecks_fmr)
-    df_data_whahouse = read_frame(stockChecks_warehouse)
-    
-    
-    
-    df_data_cat = df_data_cat.groupby(
-        by=['product__category__reference'],
-        as_index=False
-    ).agg({
-        'quantity': 'sum',
-    })
-    
-    df_data_abc = df_data_abc.groupby(
-        by=['product__abc_segmentation'],
-        as_index=False
-    ).agg({
-        'quantity': 'sum',
-    })
-    
-    df_data_fmr = df_data_fmr.groupby(
-        by=['product__fmr_segmentation'],
-        as_index=False
-    ).agg({
-        'quantity': 'sum',
-    })
-    
-    df_data_whahouse = df_data_whahouse.groupby(
-        by=['warehouse'],
-        as_index=False
-    ).agg({
-        'quantity': 'sum',
-    })
+        df_data_cat = df_data_cat.groupby(
+            by=['product__category__reference'],
+            as_index=False
+        ).agg({
+            'price_of_quantity': 'sum',
+        })
+        
+        df_data_abc = df_data_abc.groupby(
+            by=['product__abc_segmentation'],
+            as_index=False
+        ).agg({
+            'price_of_quantity': 'sum',
+        })
+        
+        df_data_fmr = df_data_fmr.groupby(
+            by=['product__fmr_segmentation'],
+            as_index=False
+        ).agg({
+            'price_of_quantity': 'sum',
+        })
+        
+        df_data_whahouse = df_data_whahouse.groupby(
+            by=['warehouse'],
+            as_index=False
+        ).agg({
+            'price_of_quantity': 'sum',
+        })
+        
     
     # stockChecks  = stockChecks.values('product__category').annotate(
     #     sum=Sum('quantity'),
@@ -533,74 +585,192 @@ def plot_pie_statuts_product_figure(selected_products, selected_categories, sele
     
     
 
-    figure_pie_orderDetail = make_subplots(rows=1, cols=1, specs=[[{'type': 'domain'}]])
-    figure_pie_fmr = make_subplots(rows=1, cols=1, specs=[[{'type': 'domain'}]])
-    figure_pie_warehouse = make_subplots(rows=1, cols=1, specs=[[{'type': 'domain'}]])
-    figure_pie_categories =  make_subplots(rows=1, cols=1, specs=[[{'type': 'domain'}]])
+        figure_pie_orderDetail = make_subplots(rows=1, cols=1, specs=[[{'type': 'domain'}]])
+        figure_pie_fmr = make_subplots(rows=1, cols=1, specs=[[{'type': 'domain'}]])
+        figure_pie_warehouse = make_subplots(rows=1, cols=1, specs=[[{'type': 'domain'}]])
+        figure_pie_categories =  make_subplots(rows=1, cols=1, specs=[[{'type': 'domain'}]])
 
 
 
-    figure_pie_categories.add_trace(
-        go.Pie(
-            labels=df_data_cat['product__category__reference'],
-            values=df_data_cat['quantity'],
-            pull=[0.1, 0.2, 0.2, 0.2],       
-            marker={    
-                'colors': [
-                    'rgb(0,255,0)',
-                    'rgb(255, 230, 0)',
-                    'rgb(255, 132, 0)', 
-                ]
-            },
-        )
-    , 1, 1)
+        figure_pie_categories.add_trace(
+            go.Pie(
+                labels=df_data_cat['product__category__reference'],
+                values=df_data_cat['price_of_quantity'],
+                pull=[0.1, 0.2, 0.2, 0.2],       
+                marker={    
+                    'colors': [
+                        'rgb(0,255,0)',
+                        'rgb(255, 230, 0)',
+                        'rgb(255, 132, 0)', 
+                    ]
+                },
+            )
+        , 1, 1)
 
-    figure_pie_orderDetail.add_trace(
-        go.Pie(
-            labels=df_data_abc['product__abc_segmentation'],
-            values=df_data_abc['quantity'],
-            pull=[0.1, 0.2, 0.2, 0.2],
-            marker={
-                'colors': [
-                    'rgb(0,255,0)',
-                    'rgb(255, 230, 0)',
-                    'rgb(255, 132, 0)',
-                ]
-            },
-        )
-    , 1, 1)
+        figure_pie_orderDetail.add_trace(
+            go.Pie(
+                labels=df_data_abc['product__abc_segmentation'],
+                values=df_data_abc['price_of_quantity'],
+                pull=[0.1, 0.2, 0.2, 0.2],
+                marker={
+                    'colors': [
+                        'rgb(0,255,0)',
+                        'rgb(255, 230, 0)',
+                        'rgb(255, 132, 0)',
+                    ]
+                },
+            )
+        , 1, 1)
+        
+        figure_pie_warehouse.add_trace(
+            go.Pie(
+                labels=df_data_whahouse['warehouse'],
+                values=df_data_whahouse['price_of_quantity'],
+                pull=[0.1, 0.2, 0.2, 0.2],
+                name="",
+                marker={
+                    'colors': [
+                        'rgb(0,255,0)',
+                        'rgb(255, 230, 0)',
+                        'rgb(255, 132, 0)',
+                    ]
+                },
+            )
+        , 1, 1)
+        
+        figure_pie_fmr.add_trace(
+            go.Pie(
+                labels=df_data_fmr['product__fmr_segmentation'],
+                values=df_data_fmr['price_of_quantity'],
+                pull=[0.1, 0.2, 0.2, 0.2],
+                name="",
+                marker={
+                    'colors': [
+                        'rgb(0,255,0)',
+                        'rgb(255, 230, 0)',
+                        'rgb(255, 132, 0)',
+                    ]
+                },
+            )
+        , 1, 1)
     
-    figure_pie_warehouse.add_trace(
-        go.Pie(
-            labels=df_data_whahouse['warehouse'],
-            values=df_data_whahouse['quantity'],
-            pull=[0.1, 0.2, 0.2, 0.2],
-            name="",
-            marker={
-                'colors': [
-                    'rgb(0,255,0)',
-                    'rgb(255, 230, 0)',
-                    'rgb(255, 132, 0)',
-                ]
-            },
-        )
-    , 1, 1)
+    elif show_by==TYPE_QUANTITY:
+        
+        stockChecks_cat = stockChecks.values('product__category__reference','quantity')
+        stockChecks_abc = stockChecks.values('product__abc_segmentation','quantity')
+        stockChecks_fmr = stockChecks.values('product__fmr_segmentation','quantity')
+        stockChecks_warehouse = stockChecks.values('warehouse','quantity')
+        
+        df_data_cat = read_frame(stockChecks_cat)
+        df_data_abc = read_frame(stockChecks_abc)
+        df_data_fmr = read_frame(stockChecks_fmr)
+        df_data_whahouse = read_frame(stockChecks_warehouse)
     
-    figure_pie_fmr.add_trace(
-        go.Pie(
-            labels=df_data_fmr['product__fmr_segmentation'],
-            values=df_data_fmr['quantity'],
-            pull=[0.1, 0.2, 0.2, 0.2],
-            name="",
-            marker={
-                'colors': [
-                    'rgb(0,255,0)',
-                    'rgb(255, 230, 0)',
-                    'rgb(255, 132, 0)',
-                ]
-            },
-        )
-    , 1, 1)
+        df_data_cat = df_data_cat.groupby(
+            by=['product__category__reference'],
+            as_index=False
+        ).agg({
+            'quantity': 'sum',
+        })
+        
+        df_data_abc = df_data_abc.groupby(
+            by=['product__abc_segmentation'],
+            as_index=False
+        ).agg({
+            'quantity': 'sum',
+        })
+        
+        df_data_fmr = df_data_fmr.groupby(
+            by=['product__fmr_segmentation'],
+            as_index=False
+        ).agg({
+            'quantity': 'sum',
+        })
+        
+        df_data_whahouse = df_data_whahouse.groupby(
+            by=['warehouse'],
+            as_index=False
+        ).agg({
+            'quantity': 'sum',
+        })
+        
+    
+    # stockChecks  = stockChecks.values('product__category').annotate(
+    #     sum=Sum('quantity'),
+    # ).values('product__category__reference','sum')
+    
+    # df_data = read_frame(stockChecks)
+    
+    
+
+        figure_pie_orderDetail = make_subplots(rows=1, cols=1, specs=[[{'type': 'domain'}]])
+        figure_pie_fmr = make_subplots(rows=1, cols=1, specs=[[{'type': 'domain'}]])
+        figure_pie_warehouse = make_subplots(rows=1, cols=1, specs=[[{'type': 'domain'}]])
+        figure_pie_categories =  make_subplots(rows=1, cols=1, specs=[[{'type': 'domain'}]])
+
+
+
+        figure_pie_categories.add_trace(
+            go.Pie(
+                labels=df_data_cat['product__category__reference'],
+                values=df_data_cat['quantity'],
+                pull=[0.1, 0.2, 0.2, 0.2],       
+                marker={    
+                    'colors': [
+                        'rgb(0,255,0)',
+                        'rgb(255, 230, 0)',
+                        'rgb(255, 132, 0)', 
+                    ]
+                },
+            )
+        , 1, 1)
+
+        figure_pie_orderDetail.add_trace(
+            go.Pie(
+                labels=df_data_abc['product__abc_segmentation'],
+                values=df_data_abc['quantity'],
+                pull=[0.1, 0.2, 0.2, 0.2],
+                marker={
+                    'colors': [
+                        'rgb(0,255,0)',
+                        'rgb(255, 230, 0)',
+                        'rgb(255, 132, 0)',
+                    ]
+                },
+            )
+        , 1, 1)
+        
+        figure_pie_warehouse.add_trace(
+            go.Pie(
+                labels=df_data_whahouse['warehouse'],
+                values=df_data_whahouse['quantity'],
+                pull=[0.1, 0.2, 0.2, 0.2],
+                name="",
+                marker={
+                    'colors': [
+                        'rgb(0,255,0)',
+                        'rgb(255, 230, 0)',
+                        'rgb(255, 132, 0)',
+                    ]
+                },
+            )
+        , 1, 1)
+        
+        figure_pie_fmr.add_trace(
+            go.Pie(
+                labels=df_data_fmr['product__fmr_segmentation'],
+                values=df_data_fmr['quantity'],
+                pull=[0.1, 0.2, 0.2, 0.2],
+                name="",
+                marker={
+                    'colors': [
+                        'rgb(0,255,0)',
+                        'rgb(255, 230, 0)',
+                        'rgb(255, 132, 0)',
+                    ]
+                },
+            )
+        , 1, 1)
 
     figure_pie_orderDetail.update_traces(hole=.4, hoverinfo="label+percent+name")
     figure_pie_categories.update_traces(hole=.4, hoverinfo="label+percent+name")
@@ -612,7 +782,7 @@ def plot_pie_statuts_product_figure(selected_products, selected_categories, sele
 @app.callback(
 
 
-    Output(figure_customer_id, "figure"),
+    Output(figure_cat_id, "figure"),
     [
         Input(dropdown_product_list_id, "value"),
         Input(dropdown_categorie_list_id, "value"),
@@ -621,8 +791,7 @@ def plot_pie_statuts_product_figure(selected_products, selected_categories, sele
         Input(dropdown_fmr_list_id, "value"),
     ]
 )
-def plot_pie_statutsd_product_figure(selected_products, selected_categories, selected_warehouses, selected_abc,
-                                    selected_fmr):
+def plot_pie_statutsd_product_figure(selected_products, selected_categories, selected_warehouses, selected_abc,selected_fmr):
     
     stockChecks = StockCheck.objects.filter(
         product__in=selected_products,
@@ -636,14 +805,12 @@ def plot_pie_statutsd_product_figure(selected_products, selected_categories, sel
     
     df_data_cat = read_frame(stockChecks_warehouse)
     
-    print(df_data_cat,'sahara')
     
     df_data_cat = df_data_cat.groupby(
         by=['warehouse','product__category__reference'],
         as_index=False
     ).size().reset_index()
     
-    print(df_data_cat,'mpl')
     
     cats = df_data_cat['product__category__reference'].drop_duplicates()
     
@@ -655,7 +822,6 @@ def plot_pie_statutsd_product_figure(selected_products, selected_categories, sel
             row: row['size'] if row.product__category__reference == row_df['product__category__reference'] else 0,
         axis=1)
         
-    print('hello',df_data_cat)
     
     figure = df_data_cat.iplot(
         asFigure=True,
@@ -707,17 +873,13 @@ def plot_pie_statutsd_product_figure(selected_products, selected_categories, sel
     stockChecks_warehouse = stockChecks.values('warehouse','product__abc_segmentation')
     
     df_data_cat = read_frame(stockChecks_warehouse)
-    
-    print(df_data_cat,'sahara')
-    
-    
+
+
     df_data_cat = df_data_cat.groupby(
         by=['warehouse','product__abc_segmentation'],
         as_index=False
     ).size().reset_index()
-    
-    print(df_data_cat,'mpl')
-    
+        
     cats = df_data_cat['product__abc_segmentation'].drop_duplicates()
     
                 
@@ -844,10 +1006,11 @@ def plot_pie_statutsd_product_ffigure(selected_products, selected_categories, se
         Input(dropdown_warehouse_list_id, "value"),
         Input(dropdown_abc_list_id, "value"),
         Input(dropdown_fmr_list_id, "value"),
+        Input(dropdown_type_list_id, "value"),
     ]
 )
 def plot_most_product_figure(selected_products, selected_categories, selected_warehouses, selected_abc,
-                                    selected_fmr):
+                                    selected_fmr,show_by):
     
     stockChecks = StockCheck.objects.filter(
         product__in=selected_products,
@@ -859,35 +1022,77 @@ def plot_most_product_figure(selected_products, selected_categories, selected_wa
       
     stockChecks = stockChecks.order_by('product__id', 'warehouse__id', '-check_date').distinct('product__id', 'warehouse__id')
     
-    results = stockChecks.values('product','quantity')
     
-    df_data_cat = read_frame(results)
+    if show_by==TYPE_PRICE:
+        stockChecks = stockChecks.values('product','product__unit_price','quantity')
+
+        stockChecks = stockChecks.annotate(
+            price_of_quantity=
+                Case(
+                    When(quantity=None, then=0),
+                    When(product__unit_price=None, then=None),
+                    default=F('quantity')*F('product__unit_price'),
+                    output_field=DecimalField()
+                ),
+        )
+        df_data_cat = read_frame(stockChecks)
     
     
-    df_data_cat = df_data_cat.groupby(
-        by=['product'],
-        as_index=False
-    ).agg({
-        'quantity': 'sum',
-    })
-    
-    df_data_cat = df_data_cat.sort_values(by='quantity',ascending = True).head(10)
+        df_data_cat = df_data_cat.groupby(
+            by=['product'],
+            as_index=False
+        ).agg({
+            'price_of_quantity': 'sum',
+        })
+        
+        df_data_cat = df_data_cat.sort_values(by='price_of_quantity',ascending = True).head(10)
 
 
-    figure = df_data_cat.iplot(
-        asFigure=True,
-        kind='barh',
-        barmode='stack',
-        x=['product'],
-        y=['quantity'],
-        theme='white',
-        title=_('TOP 10 Products'),
-        xTitle=_('Quantity'),
-        yTitle=_('Products'),
-    )  
+        figure = df_data_cat.iplot(
+            asFigure=True,
+            kind='barh',
+            barmode='stack',
+            x=['product'],
+            y=['price_of_quantity'],
+            theme='white',
+            title=_('TOP 10 Products'),
+            xTitle=_('Quantity'),
+            yTitle=_('Products'),
+        )  
+        
+        
+        return figure
+
+    elif show_by==TYPE_QUANTITY:
     
-    
-    return figure
+        results = stockChecks.values('product','quantity')
+                
+        df_data_cat = read_frame(results)        
+        
+        df_data_cat = df_data_cat.groupby(
+            by=['product'],
+            as_index=False
+        ).agg({
+            'quantity': 'sum',
+        })
+        
+        df_data_cat = df_data_cat.sort_values(by='quantity',ascending = True).head(10)
+
+
+        figure = df_data_cat.iplot(
+            asFigure=True,
+            kind='barh',
+            barmode='stack',
+            x=['product'],
+            y=['quantity'],
+            theme='white',
+            title=_('TOP 10 Products'),
+            xTitle=_('Quantity'),
+            yTitle=_('Products'),
+        )  
+        
+        
+        return figure
 
 
 
@@ -901,10 +1106,11 @@ def plot_most_product_figure(selected_products, selected_categories, selected_wa
         Input(dropdown_warehouse_list_id, "value"),
         Input(dropdown_abc_list_id, "value"),
         Input(dropdown_fmr_list_id, "value"),
+        Input(dropdown_type_list_id,"value"),
     ]
 )
 def plot_pie_statutsd_product_ffigure(selected_products, selected_categories, selected_warehouses, selected_abc,
-                                    selected_fmr):
+                                    selected_fmr,show_by):
     
     stockChecks = StockCheck.objects.filter(
         product__in=selected_products,
@@ -914,74 +1120,146 @@ def plot_pie_statutsd_product_ffigure(selected_products, selected_categories, se
         warehouse__id__in=selected_warehouses,
     )
     
-    stockChecks  = stockChecks.values('check_date','product__category__reference').annotate(
-        quantity=Sum('quantity'),
-    ).values('product__category__reference','check_date','quantity')
-    
-    
-    df_data_cat = read_frame(stockChecks)
-
-    
-
-    
-    cats = df_data_cat['product__category__reference'].drop_duplicates()
-    
-                
-    for index, row_df in df_data_cat.iterrows():
-
-                               
-        df_data_cat[row_df['product__category__reference']] = df_data_cat.apply(
-        lambda
-            row: row['quantity'] if row.product__category__reference == row_df['product__category__reference'] else 0,
-        axis=1)
-      
-    dict_agg = {'quantity':'sum'}
-    
-    print(df_data_cat,'technique')
-    
-    for row_cat in cats:
-        dict_agg[row_cat] = 'sum'
+    if show_by==TYPE_PRICE:
         
-    df_data_cat = df_data_cat.groupby(
-        by=['check_date'],
-        as_index=False
-    ).agg(dict_agg)
-      
-    print('tafiflate',df_data_cat)
-    
+        stockChecks  = stockChecks.values('check_date','product__category__reference').annotate(
+            quantity=Sum('quantity'),
+        ).values('product__category__reference','check_date','quantity')
+        
+        stockChecks = stockChecks.values('product__category__reference','product__unit_price','quantity','check_date')
 
-    
-    figure = df_data_cat.iplot(
-        asFigure=True,
-        colors=[
-            'rgb(255,0,0)',
-            'rgb(255,165,0)',
-            'rgb(0, 204, 0)',
-            'rgb(0, 48, 240)',
-            'rgb(0,255, 0)',
-        ],
-        x=['check_date'],
-        y=['quantity'].append([row_cat for row_cat in cats]),
-        theme='white',
-        name="Oil Produced (bbl)",
-        mode='markers',
-        title=_('Evolution of Product Quantity in Warhouses by Categories'),
-        xTitle=_('Date'),
-        yTitle=_('Quantity'),
-    )
-    
-    figure.update_traces(
-        type="scatter",
-        mode="lines+markers",
-        line=dict(shape="spline", smoothing=1.3),
-        marker=dict(
-            symbol="diamond-open",
-            size=7,
-        ),
-    )
+        stockChecks = stockChecks.annotate(
+            price_of_quantity=
+                Case(
+                    When(quantity=None, then=0),
+                    When(product__unit_price=None, then=None),
+                    default=F('quantity')*F('product__unit_price'),
+                    output_field=DecimalField()
+                ),
+        ).values('product__category__reference','price_of_quantity','check_date')
+        
+  
+        df_data_cat = read_frame(stockChecks)
+        
+        cats = df_data_cat['product__category__reference'].drop_duplicates()
+        
+                    
+        for index, row_df in df_data_cat.iterrows():
 
+            df_data_cat[row_df['product__category__reference']] = df_data_cat.apply(
+            lambda
+                row: row['price_of_quantity'] if row.product__category__reference == row_df['product__category__reference'] else 0,
+            axis=1)
+        
+        dict_agg = {'price_of_quantity':'sum'}
+        
+        print(df_data_cat,'technique')
+        
+        for row_cat in cats:
+            dict_agg[row_cat] = 'sum'
+            
+        df_data_cat = df_data_cat.groupby(
+            by=['check_date'],
+            as_index=False
+        ).agg(dict_agg)
+        
+        print('tafiflate',df_data_cat)
+        
+
+        
+        figure = df_data_cat.iplot(
+            asFigure=True,
+            colors=[
+                'rgb(255,0,0)',
+                'rgb(255,165,0)',
+                'rgb(0, 204, 0)',
+                'rgb(0, 48, 240)',
+                'rgb(0,255, 0)',
+            ],
+            x=['check_date'],
+            y=['price_of_quantity'].append([row_cat for row_cat in cats]),
+            theme='white',
+            name="Oil Produced (bbl)",
+            mode='markers',
+            title=_('Evolution of Price in Warhouses by Categories'),
+            xTitle=_('Date'),
+            yTitle=_('Quantity'),
+        )
+        
+        figure.update_traces(
+            type="scatter",
+            mode="lines+markers",
+            line=dict(shape="spline", smoothing=1.3),
+            marker=dict(
+                symbol="diamond-open",
+                size=7,
+            ),
+        )
+
+        
+        return figure
+
+    elif show_by==TYPE_QUANTITY:
+        
+        stockChecks  = stockChecks.values('check_date','product__category__reference').annotate(
+            quantity=Sum('quantity'),
+        ).values('product__category__reference','check_date','quantity')
+
+        
+        df_data_cat = read_frame(stockChecks)
+        
+        cats = df_data_cat['product__category__reference'].drop_duplicates()
+        
+                    
+        for index, row_df in df_data_cat.iterrows():
+
+            df_data_cat[row_df['product__category__reference']] = df_data_cat.apply(
+            lambda
+                row: row['quantity'] if row.product__category__reference == row_df['product__category__reference'] else 0,
+            axis=1)
+        
+        dict_agg = {'quantity':'sum'}
+        
     
-    return figure
+        for row_cat in cats:
+            dict_agg[row_cat] = 'sum'
+            
+        df_data_cat = df_data_cat.groupby(
+            by=['check_date'],
+            as_index=False
+        ).agg(dict_agg)
+        
+        figure = df_data_cat.iplot(
+            asFigure=True,
+            colors=[
+                'rgb(255,0,0)',
+                'rgb(255,165,0)',
+                'rgb(0, 204, 0)',
+                'rgb(0, 48, 240)',
+                'rgb(0,255, 0)',
+            ],
+            x=['check_date'],
+            y=['quantity'].append([row_cat for row_cat in cats]),
+            theme='white',
+            name="Oil Produced (bbl)",
+            mode='markers',
+            title=_('Evolution of Product Quantity in Warhouses by Categories'),
+            xTitle=_('Date'),
+            yTitle=_('Quantity'),
+        )
+        
+        figure.update_traces(
+            type="scatter",
+            mode="lines+markers",
+            line=dict(shape="spline", smoothing=1.3),
+            marker=dict(
+                symbol="diamond-open",
+                size=7,
+            ),
+        )
+
+        
+        return figure
 
 
 @app.callback(
@@ -994,10 +1272,11 @@ def plot_pie_statutsd_product_ffigure(selected_products, selected_categories, se
         Input(dropdown_warehouse_list_id, "value"),
         Input(dropdown_abc_list_id, "value"),
         Input(dropdown_fmr_list_id, "value"),
+        Input(dropdown_type_list_id, "value"),
     ]
 )
 def plot_pie_statutsd_product_ffigure(selected_products, selected_categories, selected_warehouses, selected_abc,
-                                    selected_fmr):
+                                    selected_fmr,show_by):
     
     stockChecks = StockCheck.objects.filter(
         product__in=selected_products,
@@ -1007,74 +1286,153 @@ def plot_pie_statutsd_product_ffigure(selected_products, selected_categories, se
         warehouse__id__in=selected_warehouses,
     )
     
-    stockChecks  = stockChecks.values('check_date','product__abc_segmentation').annotate(
-        quantity=Sum('quantity'),
-    ).values('product__abc_segmentation','check_date','quantity')
     
-    
-    df_data_cat = read_frame(stockChecks)
-
-    
-
-    
-    cats = df_data_cat['product__abc_segmentation'].drop_duplicates()
-    
-                
-    for index, row_df in df_data_cat.iterrows():
-
-                               
-        df_data_cat[row_df['product__abc_segmentation']] = df_data_cat.apply(
-        lambda
-            row: row['quantity'] if row.product__abc_segmentation == row_df['product__abc_segmentation'] else 0,
-        axis=1)
-      
-    dict_agg = {'quantity':'sum'}
-    
-    print(df_data_cat,'technique')
-    
-    for row_cat in cats:
-        dict_agg[row_cat] = 'sum'
+    if show_by==TYPE_PRICE:
+            
+        stockChecks  = stockChecks.values('check_date','product__abc_segmentation').annotate(
+            quantity=Sum('quantity'),
+        ).values('product__abc_segmentation','check_date','quantity')
         
-    df_data_cat = df_data_cat.groupby(
-        by=['check_date'],
-        as_index=False
-    ).agg(dict_agg)
-      
-    print('tafiflate',df_data_cat)
-    
+        stockChecks = stockChecks.values('product__abc_segmentation','product__unit_price','quantity','check_date')
 
-    
-    figure = df_data_cat.iplot(
-        asFigure=True,
-        colors=[
-            'rgb(255,0,0)',
-            'rgb(255,165,0)',
-            'rgb(0, 204, 0)',
-            'rgb(0, 48, 240)',
-            'rgb(0,255, 0)',
-        ],
-        x=['check_date'],
-        y=['quantity'].append([row_cat for row_cat in cats]),
-        theme='white',
-        name="Oil Produced (bbl)",
-        mode='markers',
-        title=_('Evolution of Product Quantity in Warhouses by ABC Segmentation'),
-        xTitle=_('Date'),
-        yTitle=_('Quantity'),
-    )
-    
-    figure.update_traces(
-        type="scatter",
-        mode="lines+markers",
-        line=dict(shape="spline", smoothing=1.3),
-        marker=dict(
-            symbol="diamond-open",
-            size=7,
-        ),
-    )
+        stockChecks = stockChecks.annotate(
+            price_of_quantity=
+                Case(
+                    When(quantity=None, then=0),
+                    When(product__unit_price=None, then=None),
+                    default=F('quantity')*F('product__unit_price'),
+                    output_field=DecimalField()
+                ),
+        ).values('product__abc_segmentation','price_of_quantity','check_date')
+        
+  
+        df_data_cat = read_frame(stockChecks)
+        
+        cats = df_data_cat['product__abc_segmentation'].drop_duplicates()
+        
+                    
+        for index, row_df in df_data_cat.iterrows():
 
+            df_data_cat[row_df['product__abc_segmentation']] = df_data_cat.apply(
+            lambda
+                row: row['price_of_quantity'] if row.product__abc_segmentation == row_df['product__abc_segmentation'] else 0,
+            axis=1)
+        
+        dict_agg = {'price_of_quantity':'sum'}
+        
+        print(df_data_cat,'technique')
+        
+        for row_cat in cats:
+            dict_agg[row_cat] = 'sum'
+            
+        df_data_cat = df_data_cat.groupby(
+            by=['check_date'],
+            as_index=False
+        ).agg(dict_agg)
+        
+        print('tafiflate',df_data_cat)
+        
+
+        
+        figure = df_data_cat.iplot(
+            asFigure=True,
+            colors=[
+                'rgb(255,0,0)',
+                'rgb(255,165,0)',
+                'rgb(0, 204, 0)',
+                'rgb(0, 48, 240)',
+                'rgb(0,255, 0)',
+            ],
+            x=['check_date'],
+            y=['price_of_quantity'].append([row_cat for row_cat in cats]),
+            theme='white',
+            name="Oil Produced (bbl)",
+            mode='markers',
+            title=_('Evolution of Price in Warhouses by ABC Segmentation'),
+            xTitle=_('Date'),
+            yTitle=_('Quantity'),
+        )
+        
+        figure.update_traces(
+            type="scatter",
+            mode="lines+markers",
+            line=dict(shape="spline", smoothing=1.3),
+            marker=dict(
+                symbol="diamond-open",
+                size=7,
+            ),
+        )
+
+        
+        return figure
     
-    return figure
+    elif show_by==TYPE_QUANTITY:
+    
+        stockChecks  = stockChecks.values('check_date','product__abc_segmentation').annotate(
+            quantity=Sum('quantity'),
+        ).values('product__abc_segmentation','check_date','quantity')
+        
+        
+        df_data_cat = read_frame(stockChecks)
+
+        cats = df_data_cat['product__abc_segmentation'].drop_duplicates()
+
+   
+        for index, row_df in df_data_cat.iterrows():
+
+                                
+            df_data_cat[row_df['product__abc_segmentation']] = df_data_cat.apply(
+            lambda
+                row: row['quantity'] if row.product__abc_segmentation == row_df['product__abc_segmentation'] else 0,
+            axis=1)
+        
+        dict_agg = {'quantity':'sum'}
+        
+        print(df_data_cat,'technique')
+        
+        for row_cat in cats:
+            dict_agg[row_cat] = 'sum'
+            
+        df_data_cat = df_data_cat.groupby(
+            by=['check_date'],
+            as_index=False
+        ).agg(dict_agg)
+        
+        print('tafiflate',df_data_cat)
+        
+
+        
+        figure = df_data_cat.iplot(
+            asFigure=True,
+            colors=[
+                'rgb(255,0,0)',
+                'rgb(255,165,0)',
+                'rgb(0, 204, 0)',
+                'rgb(0, 48, 240)',
+                'rgb(0,255, 0)',
+            ],
+            x=['check_date'],
+            y=['quantity'].append([row_cat for row_cat in cats]),
+            theme='white',
+            name="Oil Produced (bbl)",
+            mode='markers',
+            title=_('Evolution of Product Quantity in Warhouses by ABC Segmentation'),
+            xTitle=_('Date'),
+            yTitle=_('Quantity'),
+        )
+        
+        figure.update_traces(
+            type="scatter",
+            mode="lines+markers",
+            line=dict(shape="spline", smoothing=1.3),
+            marker=dict(
+                symbol="diamond-open",
+                size=7,
+            ),
+        )
+
+        
+        return figure
 
 
 
@@ -1088,10 +1446,11 @@ def plot_pie_statutsd_product_ffigure(selected_products, selected_categories, se
         Input(dropdown_warehouse_list_id, "value"),
         Input(dropdown_abc_list_id, "value"),
         Input(dropdown_fmr_list_id, "value"),
+        Input(dropdown_type_list_id, "value"),
     ]
 )
 def plot_pie_statutsd_product_ffigure(selected_products, selected_categories, selected_warehouses, selected_abc,
-                                    selected_fmr):
+                                    selected_fmr,show_by):
     
     stockChecks = StockCheck.objects.filter(
         product__in=selected_products,
@@ -1101,74 +1460,150 @@ def plot_pie_statutsd_product_ffigure(selected_products, selected_categories, se
         warehouse__id__in=selected_warehouses,
     )
     
-    stockChecks  = stockChecks.values('check_date','product__fmr_segmentation').annotate(
-        quantity=Sum('quantity'),
-    ).values('product__fmr_segmentation','check_date','quantity')
-    
-    
-    df_data_cat = read_frame(stockChecks)
-
-    
-
-    
-    cats = df_data_cat['product__fmr_segmentation'].drop_duplicates()
-    
-                
-    for index, row_df in df_data_cat.iterrows():
-
-                               
-        df_data_cat[row_df['product__fmr_segmentation']] = df_data_cat.apply(
-        lambda
-            row: row['quantity'] if row.product__fmr_segmentation == row_df['product__fmr_segmentation'] else 0,
-        axis=1)
-      
-    dict_agg = {'quantity':'sum'}
-    
-    print(df_data_cat,'technique')
-    
-    for row_cat in cats:
-        dict_agg[row_cat] = 'sum'
+    if show_by==TYPE_PRICE:
+            
+        stockChecks  = stockChecks.values('check_date','product__fmr_segmentation').annotate(
+            quantity=Sum('quantity'),
+        ).values('product__fmr_segmentation','check_date','quantity')
         
-    df_data_cat = df_data_cat.groupby(
-        by=['check_date'],
-        as_index=False
-    ).agg(dict_agg)
-      
-    print('tafiflate',df_data_cat)
-    
+        stockChecks = stockChecks.values('product__fmr_segmentation','product__unit_price','quantity','check_date')
 
-    
-    figure = df_data_cat.iplot(
-        asFigure=True,
-        colors=[
-            'rgb(255,0,0)',
-            'rgb(255,165,0)',
-            'rgb(0, 204, 0)',
-            'rgb(0, 48, 240)',
-            'rgb(0,255, 0)',
-        ],
-        x=['check_date'],
-        y=['quantity'].append([row_cat for row_cat in cats]),
-        theme='white',
-        mode='markers',
-        name="Oil Produced (bbl)",
-        title=_('Evolution of Product Quantity in Warhouses by FMR Segmentation'),
-        xTitle=_('Date'),
-        yTitle=_('Quantity'),
-    )
-    
-    figure.update_traces(
-        type="scatter",
-        mode="lines+markers",
-        line=dict(shape="spline", smoothing=1.3),
-        marker=dict(
-            symbol="diamond-open",
-            size=7,
-        ),
-    )
+        stockChecks = stockChecks.annotate(
+            price_of_quantity=
+                Case(
+                    When(quantity=None, then=0),
+                    When(product__unit_price=None, then=None),
+                    default=F('quantity')*F('product__unit_price'),
+                    output_field=DecimalField()
+                ),
+        ).values('product__fmr_segmentation','price_of_quantity','check_date')
+        
+  
+        df_data_cat = read_frame(stockChecks)
+        
+        cats = df_data_cat['product__fmr_segmentation'].drop_duplicates()
+        
+                    
+        for index, row_df in df_data_cat.iterrows():
 
+            df_data_cat[row_df['product__fmr_segmentation']] = df_data_cat.apply(
+            lambda
+                row: row['price_of_quantity'] if row.product__fmr_segmentation == row_df['product__fmr_segmentation'] else 0,
+            axis=1)
+        
+        dict_agg = {'price_of_quantity':'sum'}
+        
+        for row_cat in cats:
+            dict_agg[row_cat] = 'sum'
+            
+        df_data_cat = df_data_cat.groupby(
+            by=['check_date'],
+            as_index=False
+        ).agg(dict_agg)
+
+        
+        figure = df_data_cat.iplot(
+            asFigure=True,
+            colors=[
+                'rgb(255,0,0)',
+                'rgb(255,165,0)',
+                'rgb(0, 204, 0)',
+                'rgb(0, 48, 240)',
+                'rgb(0,255, 0)',
+            ],
+            x=['check_date'],
+            y=['price_of_quantity'].append([row_cat for row_cat in cats]),
+            theme='white',
+            name="Oil Produced (bbl)",
+            mode='markers',
+            title=_('Evolution of Price in Warhouses by FMR Segmentation'),
+            xTitle=_('Date'),
+            yTitle=_('Quantity'),
+        )
+        
+        figure.update_traces(
+            type="scatter",
+            mode="lines+markers",
+            line=dict(shape="spline", smoothing=1.3),
+            marker=dict(
+                symbol="diamond-open",
+                size=7,
+            ),
+        )
+
+        
+        return figure
     
-    return figure
+    elif show_by==TYPE_QUANTITY:
+    
+        stockChecks  = stockChecks.values('check_date','product__fmr_segmentation').annotate(
+            quantity=Sum('quantity'),
+        ).values('product__fmr_segmentation','check_date','quantity')
+        
+        
+        df_data_cat = read_frame(stockChecks)
+
+        
+
+        
+        cats = df_data_cat['product__fmr_segmentation'].drop_duplicates()
+        
+                    
+        for index, row_df in df_data_cat.iterrows():
+
+                                
+            df_data_cat[row_df['product__fmr_segmentation']] = df_data_cat.apply(
+            lambda
+                row: row['quantity'] if row.product__fmr_segmentation == row_df['product__fmr_segmentation'] else 0,
+            axis=1)
+        
+        dict_agg = {'quantity':'sum'}
+        
+        print(df_data_cat,'technique')
+        
+        for row_cat in cats:
+            dict_agg[row_cat] = 'sum'
+            
+        df_data_cat = df_data_cat.groupby(
+            by=['check_date'],
+            as_index=False
+        ).agg(dict_agg)
+        
+        print('tafiflate',df_data_cat)
+        
+
+        
+        figure = df_data_cat.iplot(
+            asFigure=True,
+            colors=[
+                'rgb(255,0,0)',
+                'rgb(255,165,0)',
+                'rgb(0, 204, 0)',
+                'rgb(0, 48, 240)',
+                'rgb(0,255, 0)',
+            ],
+            x=['check_date'],
+            y=['quantity'].append([row_cat for row_cat in cats]),
+            theme='white',
+            mode='markers',
+            name="Oil Produced (bbl)",
+            title=_('Evolution of Product Quantity in Warhouses by FMR Segmentation'),
+            xTitle=_('Date'),
+            yTitle=_('Quantity'),
+        )
+        
+        figure.update_traces(
+            type="scatter",
+            mode="lines+markers",
+            line=dict(shape="spline", smoothing=1.3),
+            marker=dict(
+                symbol="diamond-open",
+                size=7,
+            ),
+        )
+
+        
+        return figure
 
 
 

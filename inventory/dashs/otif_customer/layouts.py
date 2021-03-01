@@ -34,11 +34,11 @@ def filter_container():
             ], sm=12, md=6, lg=3),
             dbc.Col([
                 dash_utils.get_filter_dropdown(
-                    dropdown_abc_list_id, div_abc_list_id, checkbox_abc_list_id, _all_abc_segmentation, _('ABC Segmentation'))
+                    DROPDOWN_ABC_LIST_ID, DIV_ABC_LIST_ID, CHECKBOX_ABC_LIST_ID, _all_abc_segmentation, _('ABC Segmentation'))
             ], sm=12, md=6, lg=3),
             dbc.Col([
                 dash_utils.get_filter_dropdown(
-                    dropdown_fmr_list_id, div_fmr_list_id, checkbox_fmr_list_id, _all_fmr_segmentation,
+                    DROPDOWN_FMR_LIST_ID, DIV_FMR_LIST_ID, CHECKBOX_FMR_LIST_ID, _all_fmr_segmentation,
                     _('FMR Segmentation')),
                 html.Div(id="number-out"),
             ], sm=12, md=6, lg=3),
@@ -114,7 +114,7 @@ def body_container():
                                                 value='what-is',
                                                 children=dcc.Loading(
                                                     html.Div(
-                                                        [dcc.Graph(id=FIGURE_CUSTOMER_ID)],
+                                                        [dcc.Graph(id=FIGURE_ORDERSDETAILS_BY_CUSTOMER_ID)],
                                                         className="",
                                                     )
                                                 ),

@@ -3,10 +3,17 @@ from stock.dashboards import stock_value
 from stock.dashboards import stock_dio
 from stock.dashboards import stock_pareto
 from stock.dashboards import warehouse_location
+from rest_framework import routers
+from rest_framework.routers import DefaultRouter
 from . import views
 from . import viewsets
 
+
 app_name = 'stock'
+router = DefaultRouter()
+router.register('', views.TodoViewSet, basename='todos')
+
+
 urlpatterns = [
     # path('', views.IndexView.as_view(), name='index'),
     # path('<int:pk>/', views.DetailView.as_view(), name='detail'),
