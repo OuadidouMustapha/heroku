@@ -12,10 +12,10 @@ INSTALLED_APPS += [
 # List of IP addresses that allow the debug() context processor to add some variables to the template context
 INTERNAL_IPS = ['localhost', '127.0.0.1',
                 '192.168.100.153', '192.168.100.154']
-MIDDLEWARE += [
+MIDDLEWARE += (
     # Debugger toolbar (the order is important)
     'debug_toolbar.middleware.DebugToolbarMiddleware',
-]
+)
 
 INSTALLED_APPS += [
     'debug_toolbar',
