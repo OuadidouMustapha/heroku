@@ -64,7 +64,6 @@ INSTALLED_APPS = [
     'django_tables2',
     'django_select2',
     'notifications',
-    'rest_framework',
     # 'import_export_celery',
     'inventory.apps.InventoryConfig',
     'rest_framework',
@@ -292,7 +291,9 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ),
-    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+    )
 
 }
 

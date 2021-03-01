@@ -44,6 +44,7 @@ hijri-converter = "*"
 factory-boy = "*"
 djangorestframework = "*"
 djangorestframework-jwt = "*"
+drf-flex-fields = "*"
 
 [requires]
 python_version = "3.7"
