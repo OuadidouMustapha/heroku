@@ -39,9 +39,9 @@ urlpatterns = [
     path('', views.DashboardIndexView.as_view(),
          name='index'),
     # API urls
-    path('api/product/', viewsets.ProductListCreate.as_view(), name='api_product'),
-    path('api/product/dropdown/', viewsets.ProductDropdown.as_view(),
-         name='api_product_dropdown'),
+    path('api/products/', viewsets.ProductListCreate.as_view(), name='api_product'),
+    #     path('api/products/list', viewsets.ProductList.as_view(),
+    #          name='api_product_list'),
 
 
 ]

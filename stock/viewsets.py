@@ -38,9 +38,13 @@ class ProductListCreate(generics.ListCreateAPIView):
     #     return qs
 
 
-class ProductDropdown(generics.ListAPIView):
-    queryset = Product.objects.values('reference', 'id').distinct()
-    serializer_class = ProductDropdownSerializer
+class ProductList(generics.ListAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    search_fields = ['id', 'reference']
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = ProductFilter
+
     # FIXME permission used in demo mode
     permission_classes = [AllowAny]
 
