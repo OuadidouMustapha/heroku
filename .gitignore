@@ -22,6 +22,8 @@ media
 local_settings.py
 .env
 static/
+*.sql
+graph_models.png
 
 # Backup files # 
 *.bak 
@@ -61,7 +63,8 @@ var/
 *.egg
 
 # Visual Studio Code # 
-.vscode/* 
+.vscode/*
+.vscode
 !.vscode/settings.json 
 !.vscode/tasks.json 
 !.vscode/launch.json 
