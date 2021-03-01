@@ -73,6 +73,17 @@ div_fmr_list_id = dash_utils.generate_html_id(_prefix, 'div_fmr_list_id')
 div_warehouse_list_id = dash_utils.generate_html_id(_prefix, 'div_warehouse_list_id')
 div_abc_list_id = dash_utils.generate_html_id(_prefix, 'div_abc_list_id')
 
+#----------------------------------Mini Cards ----------------------------------------------------
+
+MINI_CARD_SUBTITLE_BIAS_PERCENT_ID = dash_utils.generate_html_id(_prefix, 'MINI_CARD_SUBTITLE_BIAS_PERCENT_ID')
+MINI_CARD_SUBTITLE_MAD_ID = dash_utils.generate_html_id(_prefix,'MINI_CARD_SUBTITLE_MAD_ID')
+MINI_CARD_SUBTITLE_MAPE_ID = dash_utils.generate_html_id(_prefix,'MINI_CARD_SUBTITLE_MAPE_ID')
+
+
+#------------------------------------------------------------------------------------------------
+SUBTITLE_OTIF_ID = dash_utils.generate_html_id(_prefix, 'SUBTITLE_OTIF_ID')
+SUBTITLE_ORDERS_ID = dash_utils.generate_html_id(_prefix, 'SUBTITLE_ORDERS_ID')
+SUBTITLE_DELIVERIES_ID = dash_utils.generate_html_id(_prefix, 'SUBTITLE_DELIVERIES_ID')
 # --------------------------------------------Checkbox list --------------------------------------
 checkbox_product_list_id = dash_utils.generate_html_id(_prefix, 'checkbox_product_list_id')
 checkbox_categorie_list_id = dash_utils.generate_html_id(_prefix, 'checkbox_categorie_list_id')
@@ -150,6 +161,27 @@ def filter_container():
 def body_container():
     body_container = html.Div(
         [
+            dbc.Row([
+                dbc.Col([
+                    dash_utils.get_mini_card_profil(MINI_CARD_SUBTITLE_BIAS_PERCENT_ID,title=_('OTIF Global'),id_subtitle=SUBTITLE_OTIF_ID,icon="fas fa-tachometer-alt"
+                                            #  subtitle=
+                                            #     [html.Br(),
+                                            #     dbc.Col([
+                                            #         dbc.Progress(
+                                            #             id='400',
+                                            #             striped=True,
+                                            #         ),
+                                            #     ])],icon="fas fa-tachometer-alt"
+                                            ,subtitle='')
+                ], sm=12, md=4, lg=4),
+                dbc.Col([
+                    dash_utils.get_mini_card_profil(MINI_CARD_SUBTITLE_MAD_ID, title=_('Number of Orders '),id_subtitle=SUBTITLE_ORDERS_ID,
+                                             subtitle='', icon='fas fa-clipboard-list'),
+                ], sm=12, md=4, lg=4),
+                dbc.Col([
+                   dash_utils.get_mini_card_profil(MINI_CARD_SUBTITLE_MAPE_ID,title=_('Number of Deliveries'),subtitle='',id_subtitle=SUBTITLE_DELIVERIES_ID,icon='fas fa-dolly')
+                ], sm=12, md=4, lg=4),
+            ]),
             dbc.Row([
                 dbc.Col([
                     html.Div(
