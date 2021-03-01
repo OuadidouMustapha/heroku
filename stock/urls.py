@@ -3,9 +3,16 @@ from stock.dashboards import stock_value
 from stock.dashboards import stock_dio
 from stock.dashboards import stock_pareto
 from stock.dashboards import warehouse_location
+from rest_framework import routers
+from rest_framework.routers import DefaultRouter
 from . import views
 
+
 app_name = 'stock'
+router = DefaultRouter()
+router.register('', views.TodoViewSet, basename='todos')
+
+
 urlpatterns = [
     # path('', views.IndexView.as_view(), name='index'),
     # path('<int:pk>/', views.DetailView.as_view(), name='detail'),
@@ -37,6 +44,15 @@ urlpatterns = [
          name='purchase_index'),
     path('', views.DashboardIndexView.as_view(),
          name='index'),
+     # path('todo', views.TodoViewSet.as_view(),
+     #     name='index'),
+     # path('snippets/', views.snippet_list),
+     path('test-api/', views.ProductListApiView.as_view(),
+     name='api'),
+     path('test-api/<int:pk>/', views.ProductDetailApiView.as_view(),
+     name='api'),
+     path('posts/', views.ListTodo.as_view(), name='api-post-list'),
+     path('posts/<int:pk>/', views.DetailTodo.as_view()),
 
 ]
 

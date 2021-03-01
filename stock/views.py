@@ -6,6 +6,23 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin, PermissionRequiredMixin
 
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.views.decorators.csrf import csrf_exempt
+
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .serializers import ProductSerializer
+from rest_framework import viewsets
+from rest_framework import generics
+
+from django.http import HttpResponse, JsonResponse
+from rest_framework.parsers import JSONParser
+
+
+
+
 
 
 from .models import (ProductCategory, Product, Supplier, Customer, Supply, SupplyDetail,
@@ -96,7 +113,78 @@ class PurchaseIndexView(LoginRequiredMixin, TemplateView):
 class DashboardIndexView(LoginRequiredMixin, TemplateView):
     template_name = "stock/index.html"
 
+class ProductListApiView(APIView):
+    
+    def get(self, request):
+        products=Product.objects.all()
+        serializer=ProductSerializer(products, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
+        serializer = ProductSerializer(data=request.data,many=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            print(serializer)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ProductDetailApiView(APIView):
+    """
+    Retrieve, update or delete a Product instance.
+    """
+    def get_object(self, pk):
+        try:
+            return Product.objects.get(pk=pk)
+        except Product.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk, format=None):
+        Product = self.get_object(pk)
+        serializer = ProductSerializer(Product, context={'request': request})
+        return Response(serializer.data)
+
+    def put(self, request, pk, format=None):
+        Product = self.get_object(pk)
+        serializer = ProductSerializer(Product, data=request.dataProduct,context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk, format=None):
+        Product = self.get_object(pk)
+        Product.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class ListTodo(generics.ListCreateAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
 
 
+class DetailTodo(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+
+class TodoViewSet(viewsets.ModelViewSet):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+
+    @csrf_exempt
+    def snippet_list(request):
+        """
+        List all code snippets, or create a new snippet.
+        """
+        if request.method == 'GET':
+            snippets = Product.objects.all()
+            serializer = ProductSerializer(snippets, many=True)
+            return JsonResponse(serializer.data, safe=False)
+        elif request.method == 'POST':
+            data = JSONParser().parse(request)
+            serializer = ProductSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return JsonResponse(serializer.data, status=201)
+            return JsonResponse(serializer.errors, status=400)
+        
 # def get_product_category_tree(request):
 #     return render(request, "stock/product_category_tree.html", {'product_category': ProductCategory.objects.all()})
