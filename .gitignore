@@ -7,6 +7,9 @@
 # Notes
 *.note
 
+# Added after having issue with html files in the template
+*.html.py
+
 # OSX #
 .DS_Store
 .AppleDouble
@@ -25,15 +28,24 @@ static/
 *.sql
 graph_models.png
 
+# Static files
+*.csv
+*.xls
+
 # Backup files # 
 *.bak 
 *.backup
+*.old
 
 # Thumbnails
 ._*
 
 # Distribution / packaging
 .Python
+.idea
+*.sql
+.vscode
+venv/
 env/
 build/*.log
 *.pot

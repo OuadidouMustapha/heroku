@@ -1,6 +1,8 @@
 from django.db import models
 from django.db.models import (CharField, FloatField, DecimalField, IntegerField, DateTimeField, Value,
                               ExpressionWrapper, F, Q, Count, Sum, Avg, Subquery, OuterRef, Case, When, Window)
+from django.db.models.functions import Concat
+
 from common import utils as common_utils  # TODO : Manage classes and functions
 from . import utils  # TODO : Manage classes and functions
 # from . import models
@@ -18,8 +20,72 @@ class ProductCategoryQuerySet(models.QuerySet):
         )
         qs = qs.values('reference')
         return qs
+    def get_all_productcategory(self):
+        '''
+        return list of unique/distinct productscategory
+        '''
+        return self.annotate(label=F('reference'), value=F('id')).values('label', 'value').distinct()
 
-class OrderDetailQuerySet(models.QuerySet):
+class OrderQuerySet(models.QuerySet):
+    def get_orders_for_prophet(self, product_id, circuit_id):
+        ''' Prepare data to use in Prophet model (Used in forchest-dash) '''
+        # Get filtered orders
+        qs = self.filter(product=product_id, circuit=circuit_id)
+        # Group by date
+        qs = qs.values('ordered_at')
+        qs = qs.annotate(ordered_quantity_sum=Sum('ordered_quantity'))
+        # Create columns for Prophet
+        qs = qs.annotate(
+            ds=F('ordered_at'),
+            y=F('ordered_quantity_sum')
+        ).values('ds', 'y')
+        return qs
+
+    def get_historical_order(self, category_id=None, circuit_id=None):
+        ''' Return query that will be used to plot data in plotly '''
+        filter_kwargs = {}
+        if isinstance(category_id, int) and category_id is not None:
+            filter_kwargs['category'] = category_id
+        if isinstance(circuit_id, int) and circuit_id is not None:
+            filter_kwargs['circuit'] = circuit_id
+        qs = self.filter(**filter_kwargs)
+        # qs = qs.select_related('category', 'circuit')
+        # qs = qs.annotate(
+        #     category_circuit=Concat(
+        #         'category__reference', Value('-'), 'circuit__reference',
+        #         output_field=CharField()
+        #     )
+        # )
+        qs = qs.values('category', 'circuit', 'ordered_at', 'ordered_quantity')
+        return qs
+
+
+
+
+    def get_forecasting(self, product_filter, warehouse_filter, circuit_filter, customer_filter, start_date=None, end_date=None):
+        '''get forecast and order query NOTE DEPRECATED (use orderdetail method instead)'''
+        filter_kwargs = {}
+        if product_filter is not None:
+            filter_kwargs['product__in'] = product_filter
+        if warehouse_filter is not None:
+            filter_kwargs['warehouse__in'] = warehouse_filter
+        if circuit_filter is not None:
+            filter_kwargs['circuit__in'] = circuit_filter
+        if customer_filter is not None:
+            filter_kwargs['customer__in'] = customer_filter
+
+        if start_date is not None:
+            filter_kwargs['ordered_at__gte'] = start_date
+        if end_date is not None:
+            filter_kwargs['ordered_at__lte'] = end_date
+
+        qs = self.filter(**filter_kwargs)
+        qs = qs.select_related('product', 'warehouse', 'circuit', 'customer')
+        qs = qs.values('product', 'warehouse', 'circuit', 'customer',
+                       'ordered_at', 'ordered_quantity', 'product__product_ray', 'product__product_type')
+        return qs
+
+
     def _get_group_by_product_filter(self, group_by_product):
         # Prepare filter to be used based on group_by_product option
         filter_kwargs = {}
@@ -198,4 +264,455 @@ class OrderDetailQuerySet(models.QuerySet):
         )
         qs = qs.values('total_ordered_value')
         return qs
+
+
+class OrderDetailQuerySet(models.QuerySet):
     
+    def get_forecasting(self, product_filter, warehouse_filter, circuit_filter, customer_filter, start_date=None, end_date=None):
+        '''get forecast and order query'''
+        filter_kwargs = {}
+        if product_filter:
+            filter_kwargs['product__in'] = product_filter
+        if warehouse_filter:
+            filter_kwargs['warehouse__in'] = warehouse_filter
+        if circuit_filter:
+            filter_kwargs['circuit__in'] = circuit_filter
+        if customer_filter:
+            filter_kwargs['customer__in'] = customer_filter
+
+        if start_date:
+            filter_kwargs['order__ordered_at__gte'] = start_date
+        if end_date:
+            filter_kwargs['order__ordered_at__lte'] = end_date
+        qs = self.filter(**filter_kwargs)
+        qs = qs.select_related('product', 'warehouse', 'circuit', 'customer')
+        qs = qs.values('product', 'warehouse', 'circuit', 'customer',
+                       'order__ordered_at', 'ordered_quantity', 'product__product_ray', 'product__product_type')
+
+        return qs
+    
+    def get_orderdetails_by_filters(self, product_filter, category_filter, fmr_filter, abc_filter, customer_filter, start_date=None, end_date=None):
+        """[return filtred OdrerDetails ]
+
+        Args:
+            product_filter ([list[int]]): [description]
+            category_filter ([list[int]]]): [description]
+            fmr_filter ([list[int]]]): [description]
+            abc_filter ([list[int]]]): [description]
+            customer_filter ([list[int]]]): [description]
+            start_date ([date], optional): [description]. Defaults to None.
+            end_date ([date], optional): [description]. Defaults to None.
+
+        Returns:
+            [type]: [return filtred OdrerDetails]
+        """
+        filter_kwargs = {}
+        if product_filter is not None:
+            filter_kwargs['product__in'] = product_filter
+        if category_filter is not None:
+            filter_kwargs['product__category__in'] = category_filter
+        if fmr_filter is not None:
+            filter_kwargs['product__fmr_segmentation__in'] = fmr_filter            
+        if abc_filter is not None:
+            filter_kwargs['product__abc_segmentation__in'] = abc_filter
+        if customer_filter is not None:
+            filter_kwargs['customer__in'] = customer_filter
+        if start_date is not None:
+            filter_kwargs['order__ordered_at__gte'] = start_date
+        if end_date is not None:
+            filter_kwargs['order__ordered_at__lte'] = end_date
+
+        qs = self.filter(**filter_kwargs)
+        
+        return qs
+    def get_orderdetails_status(self, product_filter, category_filter, fmr_filter, abc_filter, customer_filter, start_date=None, end_date=None):
+        """[return OdrerDetails and set status for each Order detail ]
+
+        Args:
+            product_filter ([list[int]]): [description]
+            category_filter ([list[int]]]): [description]
+            fmr_filter ([list[int]]]): [description]
+            abc_filter ([list[int]]]): [description]
+            customer_filter ([list[int]]]): [description]
+            start_date ([date], optional): [description]. Defaults to None.
+            end_date ([date], optional): [description]. Defaults to None.
+
+        Returns:
+            [type]: [return qs of status of OrderDetails for customer]
+        """
+
+        qs = self.get_orderdetails_by_filters(product_filter, category_filter, fmr_filter, abc_filter, customer_filter, start_date, end_date)
+
+        qs  = qs.annotate(
+            not_delivered =
+                Case(
+                    When(order__delivery__deliverydetail__delivered_quantity=0,then=1),
+                    When(order__delivery__deliverydetail__delivered_quantity=None, then=1),
+                    When(order__delivery__delivered_at=None, then=1),
+                    default=0,
+                    output_field=IntegerField()
+                ),
+            partially_delivered_in_time =
+                Case(
+                    When(order__delivery__deliverydetail__delivered_quantity__lt=F('ordered_quantity'),order__delivery__deliverydetail__delivered_quantity__gt=F('ordered_quantity'), desired_at__gte= F('order__delivery__delivered_at'),then=1),
+                    default=0,
+                    output_field=IntegerField()
+                ),
+            partially_delivered_not_in_time=
+                Case(
+                    When(order__delivery__deliverydetail__delivered_quantity__lt=F('ordered_quantity'),
+                        order__delivery__deliverydetail__delivered_quantity__gt=F('ordered_quantity'),
+                        desired_at__lt=F('order__delivery__delivered_at'), then=1),
+                    default=0,
+                    output_field=IntegerField()
+                ),
+            delivered_in_time=
+                Case(
+                    When(
+                        order__delivery__deliverydetail__delivered_quantity__gte=F('ordered_quantity'),
+                        desired_at__gte=F('order__delivery__delivered_at'), then=1),
+                    default=0,
+                    output_field=IntegerField()
+                ),
+            delivered_not_in_time =
+                Case(
+                    When(
+                        order__delivery__deliverydetail__delivered_quantity__gte=F('ordered_quantity'),
+                        desired_at__lt=F('order__delivery__delivered_at'), then=1),
+                    default=0,
+                    output_field=IntegerField()
+                )
+        )
+        
+        return qs
+    
+    def get_orderdetails_status_by_customer(self,product_filter, category_filter, fmr_filter, abc_filter, customer_filter, start_date=None, end_date=None):
+        """[return OdrerDetails and set status for each Order detail flirted by customer ]
+
+        Args:
+            product_filter ([list[int]]): [description]
+            category_filter ([list[int]]]): [description]
+            fmr_filter ([list[int]]]): [description]
+            abc_filter ([list[int]]]): [description]
+            customer_filter ([list[int]]]): [description]
+            start_date ([date], optional): [description]. Defaults to None.
+            end_date ([date], optional): [description]. Defaults to None.
+
+        Returns:
+            [type]: [return qs that get status of OrderDetails for customer]
+        """
+        qs = self.get_orderdetails_status(product_filter, category_filter, fmr_filter, abc_filter, customer_filter, start_date, end_date)
+
+        qs = qs.values('customer_id','customer__reference')
+        qs = qs.annotate(
+            not_delivered=Sum('not_delivered'),
+            partially_delivered_in_time=Sum('partially_delivered_in_time'),
+            partially_delivered_not_in_time=Sum('partially_delivered_not_in_time'),
+            delivered_in_time =Sum('delivered_in_time'),
+            delivered_not_in_time =Sum('delivered_not_in_time'),
+        )
+        qs = qs.values('customer','customer__reference', 'not_delivered','partially_delivered_in_time','partially_delivered_not_in_time','delivered_in_time','delivered_not_in_time')
+
+        return qs
+    
+    def get_orderdetails_status_by_order_date(self,product_filter, category_filter, fmr_filter, abc_filter, customer_filter, start_date=None, end_date=None):
+        """[return Odrerdetails and set status for each Order detail by order date ]
+
+        Args:
+            product_filter ([list[int]]): [description]
+            category_filter ([list[int]]]): [description]
+            fmr_filter ([list[int]]]): [description]
+            abc_filter ([list[int]]]): [description]
+            customer_filter ([list[int]]]): [description]
+            start_date ([date], optional): [description]. Defaults to None.
+            end_date ([date], optional): [description]. Defaults to None.
+
+        Returns:
+            [type]: [return qs that get status of orderdetails  by order date]
+        """
+        qs = self.get_orderdetails_status(product_filter, category_filter, fmr_filter, abc_filter, customer_filter, start_date, end_date)
+
+        qs = qs.values('order__ordered_at')
+        qs = qs.annotate(
+            not_delivered=Sum('not_delivered'),
+            partially_delivered_in_time=Sum('partially_delivered_in_time'),
+            partially_delivered_not_in_time=Sum('partially_delivered_not_in_time'),
+            delivered_in_time =Sum('delivered_in_time'),
+            delivered_not_in_time =Sum('delivered_not_in_time'),
+        )
+        qs = qs.values('order__ordered_at', 'not_delivered','partially_delivered_in_time','partially_delivered_not_in_time','delivered_in_time','delivered_not_in_time')
+
+        return qs    
+    def get_orderdetails_status_by_order_and_order_date(self,product_filter, category_filter, fmr_filter, abc_filter, customer_filter, start_date=None, end_date=None):
+        """[return Odrerdetails and set status for each Order detail by order and  order date ]
+
+        Args:
+            product_filter ([list[int]]): [description]
+            category_filter ([list[int]]]): [description]
+            fmr_filter ([list[int]]]): [description]
+            abc_filter ([list[int]]]): [description]
+            customer_filter ([list[int]]]): [description]
+            start_date ([date], optional): [description]. Defaults to None.
+            end_date ([date], optional): [description]. Defaults to None.
+
+        Returns:
+            [type]: [return qs that get status of orderdetails  by order and order date]
+        """
+        qs = self.get_orderdetails_status(product_filter, category_filter, fmr_filter, abc_filter, customer_filter, start_date, end_date)
+
+        qs = qs.values('order__ordered_at','order')
+        qs = qs.annotate(
+            not_delivered=Sum('not_delivered'),
+            partially_delivered_in_time=Sum('partially_delivered_in_time'),
+            partially_delivered_not_in_time=Sum('partially_delivered_not_in_time'),
+            delivered_in_time =Sum('delivered_in_time'),
+            delivered_not_in_time =Sum('delivered_not_in_time'),
+        )
+        
+        qs = qs.values('order__ordered_at','order', 'not_delivered','partially_delivered_in_time','partially_delivered_not_in_time','delivered_in_time','delivered_not_in_time')
+
+        return qs
+    def get_orderdetails_status_by_order(self,product_filter, category_filter, fmr_filter, abc_filter, customer_filter, start_date=None, end_date=None):
+        """[return Odrerdetails and set status for each Order detail by order  ]
+
+        Args:
+            product_filter ([list[int]]): [description]
+            category_filter ([list[int]]]): [description]
+            fmr_filter ([list[int]]]): [description]
+            abc_filter ([list[int]]]): [description]
+            customer_filter ([list[int]]]): [description]
+            start_date ([date], optional): [description]. Defaults to None.
+            end_date ([date], optional): [description]. Defaults to None.
+
+        Returns:
+            [type]: [return qs that get status of orderdetails  by order ]
+        """
+        qs = self.get_orderdetails_status(product_filter, category_filter, fmr_filter, abc_filter, customer_filter, start_date, end_date)
+
+        qs = qs.values('order')
+        qs = qs.annotate(
+            not_delivered=Sum('not_delivered'),
+            partially_delivered_in_time=Sum('partially_delivered_in_time'),
+            partially_delivered_not_in_time=Sum('partially_delivered_not_in_time'),
+            delivered_in_time =Sum('delivered_in_time'),
+            delivered_not_in_time =Sum('delivered_not_in_time'),
+        )
+        qs = qs.values('order', 'not_delivered','partially_delivered_in_time','partially_delivered_not_in_time','delivered_in_time','delivered_not_in_time')
+
+        return qs
+    
+    def get_order_status(self,product_filter, category_filter, fmr_filter, abc_filter, customer_filter, start_date=None, end_date=None):
+        """[return Odrer status  ]
+
+        Args:
+            product_filter ([list[int]]): [description]
+            category_filter ([list[int]]]): [description]
+            fmr_filter ([list[int]]]): [description]
+            abc_filter ([list[int]]]): [description]
+            customer_filter ([list[int]]]): [description]
+            start_date ([date], optional): [description]. Defaults to None.
+            end_date ([date], optional): [description]. Defaults to None.
+
+        Returns:
+            [type]: [return Odrer status ]
+        """
+        qs = self.get_orderdetails_status_by_order(product_filter, category_filter, fmr_filter, abc_filter, customer_filter, start_date, end_date)
+        qs  = qs.annotate(sum_total = F('not_delivered')+F('partially_delivered_in_time')+F('partially_delivered_not_in_time')+F('delivered_in_time')+F('delivered_not_in_time'))
+        qs  = qs.annotate(
+            order_not_delivered =
+                Case(
+                    When(
+                        not_delivered=F('sum_total'),
+                        not_delivered__gt=0,
+                    then=1),
+                    default=0,
+                    output_field=IntegerField()
+                ),
+            order_partially_delivered_in_time=
+                Case(
+                    When(partially_delivered_not_in_time=0,delivered_not_in_time=0,not_delivered__lt=F('sum_total'),delivered_in_time__lt=F('sum_total'),delivered_in_time__gt=0,sum_total__gt=0,then=1),
+                    When(partially_delivered_not_in_time=0,delivered_not_in_time=0,not_delivered__lt=F('sum_total'),partially_delivered_in_time__lte=F('sum_total'),partially_delivered_in_time__gt=0,sum_total__gt=0,then=1),
+                    default=0,
+                    output_field=IntegerField()
+                ),
+            order_partially_delivered_not_in_time =
+                Case(
+                    When(partially_delivered_not_in_time__gt=0,then=1),
+                    When( delivered_not_in_time__lt=F('sum_total'),delivered_not_in_time__gt=0,sum_total__gt=0,
+                    then=1),
+                    default=0,
+                    output_field=IntegerField()
+                ),
+            order_delivered_in_time=
+                Case(
+                    When(
+                        delivered_in_time__gte=F('sum_total'),
+                        delivered_in_time__gt=0, 
+                    then=1),
+                    default=0,
+                    output_field=IntegerField()
+                ),
+            order_delivered_not_in_time =
+                Case(
+                    When(delivered_not_in_time__gt=0, partially_delivered_in_time=0,partially_delivered_not_in_time=0, not_delivered=0,delivered_in_time__lt=F('sum_total'),delivered_not_in_time__lte=F('sum_total'),sum_total__gt=0,then=1),
+                    default=0,
+                    output_field=IntegerField()
+                )
+        )
+        
+        return qs
+    
+    def get_order_status_by_order_date(self,product_filter, category_filter, fmr_filter, abc_filter, customer_filter, start_date=None, end_date=None):
+        """[return Odrer status by order date  ]
+
+        Args:
+            product_filter ([list[int]]): [description]
+            category_filter ([list[int]]]): [description]
+            fmr_filter ([list[int]]]): [description]
+            abc_filter ([list[int]]]): [description]
+            customer_filter ([list[int]]]): [description]
+            start_date ([date], optional): [description]. Defaults to None.
+            end_date ([date], optional): [description]. Defaults to None.
+
+        Returns:
+            [type]: [return Odrer status by order date  ]
+        """
+        qs = self.get_order_status(product_filter, category_filter, fmr_filter, abc_filter, customer_filter, start_date, end_date)
+        
+        qs = qs.values('order__ordered_at','order', 'order_not_delivered','order_partially_delivered_in_time','order_partially_delivered_not_in_time','order_delivered_in_time','order_delivered_not_in_time')
+        
+        
+        
+        return qs
+    
+    def get_sum_of_orderdetails_by_status(self,product_filter, category_filter, fmr_filter, abc_filter, customer_filter, start_date=None, end_date=None):
+        """[return sum of orderdetails by status]
+
+        Args:
+            product_filter ([list[int]]): [description]
+            category_filter ([list[int]]]): [description]
+            fmr_filter ([list[int]]]): [description]
+            abc_filter ([list[int]]]): [description]
+            customer_filter ([list[int]]]): [description]
+            start_date ([date], optional): [description]. Defaults to None.
+            end_date ([date], optional): [description]. Defaults to None.
+
+        Returns:
+            [type]: [return qs that get sum of orderdetails by status ]
+        """
+        qs = self.get_orderdetails_status(product_filter, category_filter, fmr_filter, abc_filter, customer_filter, start_date, end_date)
+
+        qs = qs.annotate(
+            not_delivered=Sum('not_delivered'),
+            partially_delivered_in_time=Sum('partially_delivered_in_time'),
+            partially_delivered_not_in_time=Sum('partially_delivered_not_in_time'),
+            delivered_in_time =Sum('delivered_in_time'),
+            delivered_not_in_time =Sum('delivered_not_in_time'),
+        )
+        qs = qs.values('not_delivered','partially_delivered_in_time','partially_delivered_not_in_time','delivered_in_time','delivered_not_in_time')
+
+        return qs
+    
+class DeliveryQuerySet(models.QuerySet):
+
+    def get_historical_delivery(self, category_id=None, circuit_id=None):
+        ''' Return query that will be used to plot data in plotly '''
+        filter_kwargs = {}
+        if isinstance(category_id, int) and category_id is not None:
+            filter_kwargs['category'] = category_id
+        if isinstance(circuit_id, int) and circuit_id is not None:
+            filter_kwargs['circuit'] = circuit_id
+        qs = self.filter(**filter_kwargs)
+        # qs = qs.select_related('category', 'circuit')
+        # qs = qs.annotate(
+        #     category_circuit=Concat(
+        #         'category__reference', Value('-'), 'circuit__reference',
+        #         output_field=CharField()
+        #     )
+        # )
+        qs = qs.values('category', 'circuit', 'delivered_at', 'delivered_quantity')
+        return qs
+
+
+class WarehouseQuerySet(models.QuerySet):
+    def get_all_warehouses(self):
+        '''
+        return list of unique/distinct warehouses
+        '''
+        return self.annotate(label=F('reference'), value=F('id')).values('label', 'value').distinct()
+    def get_all_warehouses_fix(self):
+        '''
+        FIXME Used in dash deployment as a quick fix
+        '''
+        return self.annotate(label=F('reference'), value=F('reference')).values('label', 'value').distinct()
+    
+    def get_warehouses(self):
+        ''' NOTE deprecated function. Used to plot warehouses in dash map '''    
+        qs = self.annotate(available_products=Count(F('stock__product')))
+        # qs = self.annotate(total_product_quantity=Sum(F('stock__product')))
+        # qs = self.annotate(
+        #     avg_delivered_quantity=ExpressionWrapper(
+        #         Subquery(
+        #             DeliveryDetail.objects.filter(
+        #                 product=OuterRef('product'),
+        #                 sale__delivered_at__gte=delivered_at_start,  # _start_date,
+        #                 sale__delivered_at__lte=delivered_at_end,  # _send_date
+        #             ).values('product__reference'
+        #                     ).annotate(
+        #                 avg_delivered_quantity=ExpressionWrapper(
+        #                     Avg('delivered_quantity'), output_field=FloatField()
+        #                 )
+        #             ).values('avg_delivered_quantity')
+        #         ), output_field=DecimalField(decimal_places=2)
+        #     )
+        # )
+        return qs
+
+class ProductQuerySet(models.QuerySet):
+    def get_all_products(self):
+        '''
+        return list of unique/distinct products
+        '''
+        return self.annotate(label=F('reference'), value=F('id')).values('label', 'value').distinct()
+
+    def get_all_status_of_products(self):
+        '''
+        return list of unique/distinct status
+        '''
+        return self.annotate(label=F('status'), value=F('status')).values('label', 'value').order_by('status').distinct('status') 
+    
+    def get_all_abc_segmentation_of_products(self):
+        '''
+        return list of unique/distinct abc_segmentation
+        '''
+        return self.annotate(label=F('abc_segmentation'), value=F('abc_segmentation')).values('label', 'value').order_by('abc_segmentation').distinct('abc_segmentation')
+    def get_all_fmr_segmentation_of_products(self):
+        '''
+        return list of unique/distinct fmr_segmentation
+        '''
+        return self.annotate(label=F('fmr_segmentation'), value=F('fmr_segmentation')).values('label', 'value').order_by('fmr_segmentation').distinct('fmr_segmentation')
+    def get_all_products_by_attribute(self, attribute):
+        '''
+        return list of unique/distinct products based on selected attribute
+        '''
+        return self.annotate(label=F(attribute), value=F(attribute)).values('label', 'value').order_by(attribute).distinct(attribute)
+
+class CircuitQuerySet(models.QuerySet):
+    def get_all_circuits(self):
+        '''
+        return list of unique/distinct circuit
+        '''
+        return self.annotate(label=F('reference'), value=F('id')).values('label', 'value').distinct()
+
+class CustomerQuerySet(models.QuerySet):
+    def get_all_customers(self):
+        '''
+        return list of unique/distinct customer
+        '''
+        return self.annotate(label=F('reference'), value=F('id')).values('label', 'value').distinct()
+class SupplierQuerySet(models.QuerySet):
+    def get_all_suppliers(self):
+        '''
+        return list of unique/distinct customer
+        '''
+        return self.annotate(label=F('reference'), value=F('id')).values('label', 'value').distinct()
