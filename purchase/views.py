@@ -7,4 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 
 class Purchase(LoginRequiredMixin, TemplateView):
-    template_name = "purchase/index.html"
+    template_name = "purchase_dash/index.html"
+
+class PurchaseOtif(LoginRequiredMixin, TemplateView):
+    template_name = "purchase_otif/index.html"

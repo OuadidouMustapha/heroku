@@ -116,6 +116,37 @@
         </div>
     </li>
 
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsePagesurchase" aria-expanded="true" aria-controls="collapsePagesurchase">
+            <i class="fas fa-shopping-cart"></i>
+            <span>{% trans 'Purchase' %}</span>
+        </a>
+        <div id="collapsePagesurchase" class="collapse hide" aria-labelledby="headingPages" data-parent="#accordionSidebar" style="">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <hr class="sidebar-divider black">
+                <div class="collapse-divider"></div>
+                <h6 class="collapse-header">{% trans 'Supplier performance' %}</h6>
+                <a class="collapse-item" href="{% url 'inventory:order_customer' %}">{% trans 'Lead Time' %}</a>
+                <a class="collapse-item" href="{% url 'inventory:delivery_customer' %}">{% trans 'OTIF' %}</a>
+                <a class="collapse-item" >{% trans 'In Progress' %}</a>
+                <div class="collapse-divider"></div>
+                <h6 class="collapse-header">{% trans 'Data quality' %}</h6>
+                <a class="collapse-item" >{% trans 'Reliability Of The Promise' %}</a>
+                <a class="collapse-item" >{% trans 'Reliability Of Logistics Data' %}</a>
+                <a class="collapse-item" >{% trans 'OTIF' %}</a>
+                <div class="collapse-divider"></div>
+                <h6 class="collapse-header">{% trans 'Actions/Buyer' %}</h6>
+                <div class="collapse-divider"></div>
+                <h6 class="collapse-header">{% trans 'CPFR view' %}</h6>
+                <a class="collapse-item" >{% trans 'Forecast' %}</a>
+                <a class="collapse-item" >{% trans 'Perfermance' %}</a>
+                <a class="collapse-item" >{% trans 'Actions' %}</a>
+                <div class="collapse-divider"></div>
+                <h6 class="collapse-header">{% trans 'Buyer Performance' %}</h6>
+            </div>
+        </div>
+    </li>
+
     {% comment %} <li class="nav-item">
         <a class="nav-link" href="{% url 'deployment:deployment_index' %}">
             <i class="fas fa-bezier-curve"></i>

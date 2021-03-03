@@ -158,13 +158,15 @@ class OrderDetailFactory(factory.django.DjangoModelFactory):
             # Generate random date
 
             # Generate warehouses
-            random_date_this_year = Faker().date_time_between(start_date='-1y', end_date='+1y')
+            random_date_this_year_receipt_at = Faker().date_time_between(start_date='-1y', end_date='+1y')
+            random_date_this_year_expedit_at = Faker().date_time_between(start_date='-1y', end_date='+1y')
 
             ReceiptDetailFactory(
                 product=self.product,
                 order=self.order,
                 order_detail=self,
-                receipt_at = random_date_this_year,
+                receipt_at = random_date_this_year_receipt_at,
+                expedit_at = random_date_this_year_expedit_at,
                 receipt = random.choice(receipts),
                 warehouse = random.choice(warehouses),
                 status = random.choice(status),

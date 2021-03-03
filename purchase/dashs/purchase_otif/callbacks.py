@@ -208,15 +208,13 @@ _figure_empty = _df_empty.iplot(
 
 @app.callback(
     [
-        Output(FIGURE_ORDERSDETAILS_BY_CUSTOMER_ID, "figure"),
-        Output(FIGURE_OTIF_ID, "figure"),
+        Output(FIGURE_ORDERSDETAILS_ID, "figure"),
+        Output(FIGURE_PIE_ORDERDETAIL_ID, "figure"),
+        Output(FIGURE_ORDERS_ID, "figure"),
+        Output(FIGURE_PIE_ORDER_ID, "figure"),
         Output(SUBTITLE_OTIF_ID, "children"),
         Output(SUBTITLE_DELIVERIES_ID, "children"),
         Output(SUBTITLE_ORDERS_ID, "children"),
-        Output('computed-table', 'data'),
-        Output(INPUT_X1, 'value'),
-        Output(INPUT_X2, 'value'),
-        Output(INPUT_X3, 'value'),
     ],
     [
         Input(DROPDOWN_PRODUCT_LIST_ID, "value"),
@@ -227,16 +225,9 @@ _figure_empty = _df_empty.iplot(
         Input(DROPDOWN_SUPPLIER_LIST_ID, "value"),
         Input(INPUT_DATE_RANGE_ID, 'start_date'),
         Input(INPUT_DATE_RANGE_ID, 'end_date'),
-        Input(SUBMIT_VALUES, 'n_clicks'),
-    ],
-    [
-        State('computed-table', 'data'),
-        State(INPUT_X1, 'value'),
-        State(INPUT_X2, 'value'),
-        State(INPUT_X3, 'value'),
     ]
 )
-def plot_figure(selected_products, selected_orders, selected_categories,selected_order_types,selected_incoterms, selected_suppliers, start_date, end_date, n_clicks,rows,value_x1, value_x2,value_x3):
+def plot_figure(selected_products, selected_orders, selected_categories,selected_order_types,selected_incoterms, selected_suppliers, start_date, end_date,):
     """[function that return figure that give status of all orderDetails that made by the filtered customer ]
 
     Args:
@@ -324,67 +315,6 @@ def plot_figure(selected_products, selected_orders, selected_categories,selected
 
 
 
-    if n_clicks == 0:
-        df_order_detail_filtred_classification = df_order_detail_filtred[df_order_detail_filtred['diff_days_order'].notnull(
-        )]
-        df = df_order_detail_filtred_classification['diff_days_order'].describe()
-
-
-        if df.size != 0:
-            value_x1 = int(df['25%'])
-            value_x2 = int(df['50%'])
-            value_x3 = int(df['75%'])
-    if n_clicks > 0 and value_x1 != None and value_x2 != None:
-
-        df_order_detail_filtred_classification = df_order_detail_filtred[df_order_detail_filtred['diff_days_order'].notnull()]
-
-        df_order_detail_filtred_classification = df_order_detail_filtred_classification.apply(
-            lambda x: count_values(x, value_x1, value_x2,value_x3), axis=1)
-
-        A_value_count = df_order_detail_filtred_classification['A'].sum()
-
-        B_value_count = df_order_detail_filtred_classification['B'].sum()
-
-        C_value_count = df_order_detail_filtred_classification['C'].sum()
-
-        D_value_count = df_order_detail_filtred_classification['D'].sum()
-
-        labels = ['0<Lead Time<'+str(value_x1), str(value_x1) + '<Lead Time<'+str(value_x2), str(value_x2)+'<Lead Time<'+str(value_x3),str(value_x3)+'<Lead Time']
-
-        values = [A_value_count, B_value_count, C_value_count,D_value_count]
-
-        fig_pie = go.Figure(
-            data=[go.Pie(labels=labels, values=values, pull=[0.1, 0.2, 0.2, 0.2])])
-
-    elif value_x1 != None and value_x2 != None:
-
-        df_order_detail_filtred_classification = df_order_detail_filtred[df_order_detail_filtred['diff_days_order'].notnull(
-        )]
-
-        df_order_detail_filtred_classification = df_order_detail_filtred_classification.apply(
-            lambda x: count_values(x, value_x1, value_x2,value_x3), axis=1)
-
-        print(df_order_detail_filtred_classification)
-
-        A_value_count = df_order_detail_filtred_classification['A'].sum()
-
-        B_value_count = df_order_detail_filtred_classification['B'].sum()
-
-        C_value_count = df_order_detail_filtred_classification['C'].sum()
-
-        D_value_count = df_order_detail_filtred_classification['D'].sum()
-
-        labels = ['0<Lead Time<'+str(value_x1), str(value_x1) +
-                  '<Lead Time<'+str(value_x2), str(value_x2)+'<Lead Time<'+str(value_x3),str(value_x3)+'<Lead Time']
-
-        values = [A_value_count, B_value_count, C_value_count,D_value_count]
-
-        fig_pie = go.Figure(
-            data=[go.Pie(labels=labels, values=values, pull=[0.1, 0.2, 0.2, 0.2])])
-
-    else:
-        fig_pie = _figure_empty
-
     fig_pie.update_traces(hoverinfo='label+percent+value',
                           textinfo='value', hole=.4, marker=dict(colors=colors))
 
@@ -398,21 +328,6 @@ def plot_figure(selected_products, selected_orders, selected_categories,selected
 
         df_for_pie_graph = df_order_detail_filtred
 
-
-        df_order_detail_filtred = df_order_detail_filtred[df_order_detail_filtred['diff_days_order'].notnull(
-        )]
-
-        df_order_detail_filtred = df_order_detail_filtred.sort_values(
-            ['diff_days_order'], ascending=False)
-
-        df_order_detail_filtred = df_order_detail_filtred.reset_index(
-            drop=True)
-
-        df_order_detail_filtred.index = df_order_detail_filtred.index + 1
-
-        tseries = df_order_detail_filtred['diff_days_order']
-
-        color = (tseries > 0).apply(lambda x: 'g' if x else 'r')
 
         otif_df = df_for_pie_graph['status'].value_counts()
 
@@ -431,11 +346,13 @@ def plot_figure(selected_products, selected_orders, selected_categories,selected
 
             otif = round(otif, 3)
 
-        figure = df_order_detail_filtred.iplot(
+
+        figure_order_detail = df_for_pie_graph.iplot(
             asFigure=True,
-            kind='bar',
+            kind='scatter',
+            mode='markers',
             barmode='group',
-            y=['diff_days_order'],
+            y=['status'],
             theme='white',
             showlegend=False,
             title='',
@@ -443,73 +360,68 @@ def plot_figure(selected_products, selected_orders, selected_categories,selected
             yTitle=_('Lead Time'),
         )
 
-        min_data = df_order_detail_filtred['diff_days_order'].min()
+        figure_pie_order_detail.add_trace(
+            go.Pie(
+                labels=df_for_pie_graph['status'],
+                pull=[0.1, 0.2, 0.2, 0.2],
+                name="",
+                marker={
+                    # 'colors' : [{
+                    #     NOT_DELIVERED:'#ff0000',
+                    #     IN_FULL_IN_TIME:'#ff5050'
+                    # }],
+                    'colors': [
+                        'yellow',
+                        'yellow',
+                        'yellow',
+                        'yellow',
+                        'yellow',
+                    ]
+                },
+            ), 1, 1)
 
-        max_data = df_order_detail_filtred['diff_days_order'].max()
-
-        mean_data = df_order_detail_filtred['diff_days_order'].mean()
-
-        std_data = df_order_detail_filtred['diff_days_order'].std()
-
-        try:
-            rows[0]['Min'] = min_data
-        except:
-            rows[0]['Min'] = 'NA'
-        try:
-            rows[0]['Max'] = max_data
-        except:
-            rows[0]['Max'] = 'NA'
-        try:
-            rows[0]['Mean'] = round(mean_data,1)
-        except:
-            rows[0]['Mean'] = 'NA'
-        try:
-            rows[0]['Std'] = round(std_data,1)
-        except:
-            rows[0]['Std'] = 'NA'
-
-        if  len(df_order_detail_filtred[df_order_detail_filtred['diff_days_order'] ==  df_order_detail_filtred['diff_days_order'].min()].index.tolist())!=0:
-            figure.add_trace(go.Scatter(
-                    x=[df_order_detail_filtred[df_order_detail_filtred['diff_days_order'] ==
-                                            df_order_detail_filtred['diff_days_order'].min()].index.tolist()[0]],
-                    y=[df_order_detail_filtred['diff_days_order'].min()],
-                    mode="markers",
-                    showlegend=False,
-                    marker=dict(color="yellow", size=10)
-                )
-            )
-            figure.add_trace(go.Scatter(
-                    x=[df_order_detail_filtred[df_order_detail_filtred['diff_days_order'] ==
-                                            df_order_detail_filtred['diff_days_order'].max()].index.tolist()[0]],
-                    y=[df_order_detail_filtred['diff_days_order'].max()],
-                    mode="markers",
-                    showlegend=False,
-                    marker=dict(color="lightgreen", size=10)
-                )
-            )
-            figure.add_trace(go.Scatter(
-                    x=[-1, max(df_order_detail_filtred.index.tolist())+1],
-                    y=[df_order_detail_filtred['diff_days_order'].mean(
-                    ), df_order_detail_filtred['diff_days_order'].mean()],
-                    mode="lines",
-                    showlegend=True,
-                    line=dict(color='firebrick', width=4, dash='dot')
-                )
-            )
-        else :
-            figure = _figure_empty
-
+        figure_pie_order.add_trace(
+            go.Pie(
+                labels=df_order_filtred['status'],
+                pull=[0.1, 0.2, 0.2, 0.2],
+                name="",
+                marker={
+                    'colors': [{
+                        '10': '#ff0000',
+                        '9': '#ff5050'
+                    }],
+                    # 'colors': [
+                    #     'red',
+                    #     'rgb(0, 200, 0)',
+                    #     'rgb(0,255,0)',
+                    #     'rgb(255, 230, 0)',
+                    #     'rgb(255, 132, 0)',
+                    # ]
+                },
+            ), 1, 1)
+        figure_order = df_order_filtred.iplot(
+            asFigure=True,
+            kind='scatter',
+            mode='markers',
+            barmode='group',
+            y=['status'],
+            theme='white',
+            showlegend=False,
+            title='',
+            xTitle=_('Commandes'),
+            yTitle=_('Lead Time'),
+        )
     else:
 
-        figure = _figure_empty
+        figure_order_detail = _figure_empty
+        figure_order = _figure_empty
 
-    figure.update_layout(
-        autosize=True,
-        yaxis=dict(
-            tickmode="array",
-        )
-    )
-    return figure,fig_pie, str(otif)+'%', receipts_count, orders_count,rows,value_x1,value_x2,value_x3
+
+    figure_pie_order.update_traces(
+        hole=.4, hoverinfo="label+percent+name+value")
+    figure_pie_order_detail.update_traces(
+        hole=.4, hoverinfo="label+percent+name+value")
+    return  figure_order_detail,figure_pie_order_detail,figure_order,figure_pie_order, str(otif)+'%', receipts_count, orders_count
 
 
 dash_utils.select_all_callbacks(

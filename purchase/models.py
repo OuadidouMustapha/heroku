@@ -1,5 +1,6 @@
 from django.db import models
 from stock.models import Supplier, Product, Warehouse
+from . import managers
 
 # Create your models here.
 
@@ -27,10 +28,41 @@ class CommonMeta(models.Model):
 
 
 class Order(CommonMeta):
+    IMOPRT = 'Import'
+    LOCAL = 'Local'
+
+    TYPES = (
+        (IMOPRT, 'Import'),
+        (LOCAL, 'Local'),
+    )
+
+    A = 'A'
+    B = 'B'
+    C = 'C'
+    INCOTERMS = (
+        (A, 'A'),
+        (B, 'B'),
+        (C, 'C'),
+    )
+
     reference = models.CharField(unique=True, max_length=200)
-    ordered_at = models.DateField(blank=True, null=True)
+    ordered_at = models.DateTimeField(blank=True, null=True)
     supplier = models.ForeignKey(
         Supplier, on_delete=models.CASCADE, blank=True, null=True)
+    order_type = models.CharField(
+        max_length=32,
+        choices=TYPES,
+        default=LOCAL,
+        null=True,blank=True
+    )
+    incoterm = models.CharField(
+        max_length=32,
+        choices=INCOTERMS,
+        default=A,
+        null=True, blank=True
+    ) 
+
+    objects = managers.OrderQuerySet.as_manager()
 
     def __str__(self):
         return f'{self.reference}'
@@ -91,3 +123,5 @@ class ReceiptDetail(CommonMeta):
         null=True, blank=True
     )
     receipt_at = models.DateTimeField(blank=True, null=True)
+
+    expedit_at = models.DateTimeField(blank=True, null=True)
