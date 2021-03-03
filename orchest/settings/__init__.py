@@ -11,8 +11,8 @@ env_settings = importlib.import_module(f'orchest.settings.{ENV_ROLE}')
 
 globals().update(vars(env_settings))
 
-try:
-  # import local settings if present
-  from .local import *  # noqa
-except ImportError:
-  pass
+# try:
+#   # import local settings if present
+#   from .local import *  # noqa
+# except ImportError:
+#   pass
