@@ -90,7 +90,7 @@ class Receipt(CommonMeta):
         Supplier, on_delete=models.CASCADE, blank=True, null=True)
 
 
-class ReceiptDetail(CommonMeta):test
+class ReceiptDetail(CommonMeta):
     A = 'A'
     Q = 'Q'
     R = 'R'
