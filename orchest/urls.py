@@ -25,17 +25,17 @@ urlpatterns = [
     path('', TemplateView.as_view(template_name='home.html'), name='home'),
     path('admin/', admin.site.urls),
 
-    # path('account/', include('account.urls')),
-    # path('account/', include('django.contrib.auth.urls')),
-    # path('stock/', include('stock.urls')),
-    # path('forecasting/', include('forecasting.urls')),
-    # path('deployment/', include('deployment.urls')),
-    # path('django_plotly_dash/', include('django_plotly_dash.urls')),
-    # path('select2/', include('django_select2.urls')),
-    # path('inventory/', include('inventory.urls')),
-    # path('inbox/notifications/',
-    #      include(notifications.urls, namespace='notifications')),
-    # path('purchase/', include('purchase.urls')),
+    path('account/', include('account.urls')),
+    path('account/', include('django.contrib.auth.urls')),
+    path('stock/', include('stock.urls')),
+    path('forecasting/', include('forecasting.urls')),
+    path('deployment/', include('deployment.urls')),
+    path('django_plotly_dash/', include('django_plotly_dash.urls')),
+    path('select2/', include('django_select2.urls')),
+    path('inventory/', include('inventory.urls')),
+    path('inbox/notifications/',
+         include(notifications.urls, namespace='notifications')),
+    path('purchase/', include('purchase.urls')),
 ]
 
 # Enable the debugger toolbar
